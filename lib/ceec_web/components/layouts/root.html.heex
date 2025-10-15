@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" class="[scrollbar-gutter:stable]">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <title>CEEC Data Collection Tool</title>
+    <link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src={~p"/assets/tailwind-config.js"}></script>
+    <style>
+      .form-select {
+        --select-button-svg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239ca3af'%3e%3cpath d='M7 10l5 5 5-5H7z'/%3e%3c/svg%3e");
+        appearance: none;
+        background-image: var(--select-button-svg);
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+      }
+      .dark .form-select {
+        --select-button-svg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236b7280'%3e%3cpath d='M7 10l5 5 5-5H7z'/%3e%3c/svg%3e");
+      }
+      
+      /* Sidebar Mobile Styles */
+      @media (max-width: 1024px) {
+        #sidebar {
+          transform: translateX(-100%);
+        }
+        #sidebar.show {
+          transform: translateX(0);
+        }
+      }
+      
+      /* Mobile Sidebar Overlay */
+      .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      .sidebar-overlay.show {
+        opacity: 1;
+      }
+    </style>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
+    </script>
+  </head>
+  <body class="font-display bg-gray-50 text-gray-900">
+    <%= if @current_user do %>
+      <!-- Sidebar Layout for Authenticated Users -->
+      <.sidebar current_user={@current_user} current_page={assigns[:current_page] || ""} />
+      
+      <!-- Main Content Area -->
+      <div class="lg:ml-64">
+        <!-- Mobile Header -->
+        <div class="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+          <.mobile_toggle />
+          <div class="flex items-center space-x-3">
+            <div class="text-sm text-gray-600">
+              {@current_user.email}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Main Content -->
+        <main class="min-h-screen px-6 py-4 lg:px-8 lg:py-6">
+          {@inner_content}
+        </main>
+      </div>
+    <% else %>
+      <!-- Layout for Non-Authenticated Users -->
+      {@inner_content}
+    <% end %>
+  </body>
+</html>

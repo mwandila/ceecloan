@@ -1,0 +1,129 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* This file is for your main application CSS */
+
+/* Custom Authentication Styles */
+.auth-container {
+  @apply min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8;
+}
+
+.auth-card {
+  @apply bg-white shadow-2xl rounded-2xl p-8 w-full max-w-md border border-gray-100;
+}
+
+.auth-header {
+  @apply text-center mb-8;
+}
+
+.auth-title {
+  @apply text-3xl font-bold text-gray-900 mb-2;
+}
+
+.auth-subtitle {
+  @apply text-sm text-gray-600;
+}
+
+.auth-form {
+  @apply space-y-6;
+}
+
+.auth-input-group {
+  @apply space-y-2;
+}
+
+.auth-label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.auth-input {
+  @apply appearance-none rounded-lg relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 transition-all duration-200 hover:border-gray-400;
+}
+
+.auth-input:focus {
+  @apply ring-2 ring-blue-500 border-blue-500 shadow-lg;
+}
+
+.auth-button {
+  @apply relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98];
+}
+
+.auth-link {
+  @apply font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200;
+}
+
+.auth-checkbox-container {
+  @apply flex items-center justify-between;
+}
+
+.auth-checkbox-group {
+  @apply flex items-center;
+}
+
+.auth-checkbox {
+  @apply h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-colors;
+}
+
+.auth-checkbox-label {
+  @apply ml-2 block text-sm text-gray-700;
+}
+
+.auth-divider {
+  @apply relative my-6;
+}
+
+.auth-divider::before {
+  content: '';
+  @apply absolute inset-0 flex items-center;
+}
+
+.auth-divider::before {
+  @apply border-t border-gray-300;
+}
+
+.auth-divider-text {
+  @apply relative flex justify-center text-sm;
+}
+
+.auth-divider-text span {
+  @apply px-2 bg-white text-gray-500;
+}
+
+.auth-error {
+  @apply mt-2 text-sm text-red-600;
+}
+
+.auth-success {
+  @apply mt-2 text-sm text-green-600;
+}
+
+/* Logo/Brand Styling */
+.auth-logo {
+  @apply mx-auto h-16 w-16 mb-4;
+}
+
+/* Responsive enhancements */
+@media (max-width: 640px) {
+  .auth-card {
+    @apply p-6 mx-2;
+  }
+  
+  .auth-title {
+    @apply text-2xl;
+  }
+}
+
+/* Animation for form elements */
+.auth-input-group {
+  @apply transform transition-all duration-200;
+}
+
+.auth-input-group:focus-within {
+  @apply scale-[1.01];
+}
+
+/* Custom focus states */
+.auth-input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}

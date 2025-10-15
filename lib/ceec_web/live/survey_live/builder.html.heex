@@ -1,0 +1,552 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <div class="bg-white shadow-sm border-b">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center">
+          <.link href={~p"/surveys"} class="text-gray-500 hover:text-gray-700 mr-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </.link>
+          <h1 class="text-xl font-semibold text-gray-900">
+            <%= if @live_action == :new do %>
+              Create New Survey
+            <% else %>
+              Edit Survey: <%= @survey.title %>
+            <% end %>
+          </h1>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button 
+            phx-click="save_survey" 
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            Save Survey
+          </button>
+          <button 
+            phx-click="preview_survey" 
+            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            Preview
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <%= if @show_project_selection do %>
+      <!-- Project Selection Step -->
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-lg shadow-sm border p-8">
+          <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Select a Project</h2>
+            <p class="text-gray-600">Choose the project this survey will be associated with</p>
+          </div>
+          
+          <div class="space-y-4">
+            <%= for project <- @projects do %>
+              <button 
+                phx-click="select_project"
+                phx-value-project_id={project.id}
+                class="w-full p-6 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 text-left group"
+              >
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-700"><%= project.name %></h3>
+                    <p class="text-sm text-gray-500 mt-1">Code: <%= project.project_code %></p>
+                    <%= if project.description do %>
+                      <p class="text-gray-600 mt-2 line-clamp-2"><%= project.description %></p>
+                    <% end %>
+                  </div>
+                  <div class="ml-4">
+                    <span class={[
+                      "inline-flex px-2 py-1 text-xs font-medium rounded-full",
+                      project.status == "active" && "bg-green-100 text-green-800",
+                      project.status == "completed" && "bg-blue-100 text-blue-800",
+                      project.status == "planned" && "bg-yellow-100 text-yellow-800",
+                      "bg-gray-100 text-gray-800"
+                    ]}>
+                      <%= String.capitalize(project.status) %>
+                    </span>
+                  </div>
+                </div>
+              </button>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% else %>
+      <!-- Regular Survey Builder -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      
+      <!-- Left Sidebar - Question Types -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-sm border p-6">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Question Types</h3>
+          <div class="space-y-3">
+            <!-- Text Input -->
+            <div 
+              class="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+              phx-click="add_question"
+              phx-value-type="text"
+            >
+              <div class="flex items-center">
+                <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
+                </svg>
+                <div>
+                  <div class="font-medium text-sm">Text Input</div>
+                  <div class="text-xs text-gray-500">Short answer</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Textarea -->
+            <div 
+              class="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+              phx-click="add_question"
+              phx-value-type="textarea"
+            >
+              <div class="flex items-center">
+                <svg class="w-5 h-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                </svg>
+                <div>
+                  <div class="font-medium text-sm">Long Text</div>
+                  <div class="text-xs text-gray-500">Paragraph answer</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Multiple Choice -->
+            <div 
+              class="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+              phx-click="add_question"
+              phx-value-type="radio"
+            >
+              <div class="flex items-center">
+                <svg class="w-5 h-5 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                  <div class="font-medium text-sm">Multiple Choice</div>
+                  <div class="text-xs text-gray-500">Single selection</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Checkboxes -->
+            <div 
+              class="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+              phx-click="add_question"
+              phx-value-type="checkbox"
+            >
+              <div class="flex items-center">
+                <svg class="w-5 h-5 text-orange-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                <div>
+                  <div class="font-medium text-sm">Checkboxes</div>
+                  <div class="text-xs text-gray-500">Multiple selection</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Select Dropdown -->
+            <div 
+              class="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+              phx-click="add_question"
+              phx-value-type="select"
+            >
+              <div class="flex items-center">
+                <svg class="w-5 h-5 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+                <div>
+                  <div class="font-medium text-sm">Dropdown</div>
+                  <div class="text-xs text-gray-500">Select from list</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content - Survey Builder -->
+      <div class="lg:col-span-3">
+        <div class="bg-white rounded-lg shadow-sm border">
+          <!-- Survey Header -->
+          <div class="p-6 border-b">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Survey Title</label>
+                <input 
+                  type="text" 
+                  name="title"
+                  value={@survey.title}
+                  phx-blur="update_survey"
+                  phx-value-field="title"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter survey title..."
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select 
+                  name="status"
+                  phx-change="update_survey"
+                  phx-value-field="status"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="draft" selected={@survey.status == "draft"}>Draft</option>
+                  <option value="active" selected={@survey.status == "active"}>Active</option>
+                  <option value="completed" selected={@survey.status == "completed"}>Completed</option>
+                  <option value="archived" selected={@survey.status == "archived"}>Archived</option>
+                </select>
+              </div>
+            </div>
+            <div class="mt-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <textarea 
+                name="description"
+                phx-blur="update_survey"
+                phx-value-field="description"
+                rows="3"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Describe your survey..."
+              ><%= @survey.description %></textarea>
+            </div>
+          </div>
+
+          <!-- Questions List -->
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-lg font-medium text-gray-900">Questions (<%= length(@questions) %>)</h3>
+              <%= if length(@questions) > 0 do %>
+                <button 
+                  phx-click="clear_all_questions"
+                  data-confirm="Are you sure you want to delete all questions?"
+                  class="text-red-600 hover:text-red-800 text-sm font-medium"
+                >
+                  Clear All
+                </button>
+              <% end %>
+            </div>
+
+            <%= if length(@questions) == 0 do %>
+              <div class="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
+                <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No questions yet</h3>
+                <p class="text-gray-500 mb-4">Start building your survey by adding questions from the left panel.</p>
+                <button 
+                  phx-click="add_question"
+                  phx-value-type="text"
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Add Your First Question
+                </button>
+              </div>
+            <% else %>
+              <div class="space-y-4" id="questions-list">
+                <%= for {question, index} <- Enum.with_index(@questions) do %>
+                  <div class="border rounded-lg p-4 bg-gray-50" id={"question-#{index}"}>
+                    <div class="flex items-start justify-between mb-3">
+                      <div class="flex items-center">
+                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full mr-3">
+                          <%= index + 1 %>
+                        </span>
+                        <span class="text-sm font-medium text-gray-600 capitalize">
+                          <%= question.question_type %>
+                        </span>
+                      </div>
+                      <div class="flex items-center space-x-2">
+                        <%= if index > 0 do %>
+                          <button 
+                            phx-click="move_question"
+                            phx-value-index={index}
+                            phx-value-direction="up"
+                            class="text-gray-400 hover:text-gray-600"
+                            title="Move up"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                            </svg>
+                          </button>
+                        <% end %>
+                        <%= if index < length(@questions) - 1 do %>
+                          <button 
+                            phx-click="move_question"
+                            phx-value-index={index}
+                            phx-value-direction="down"
+                            class="text-gray-400 hover:text-gray-600"
+                            title="Move down"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                          </button>
+                        <% end %>
+                        <button 
+                          phx-click="delete_question"
+                          phx-value-index={index}
+                          data-confirm="Are you sure you want to delete this question?"
+                          class="text-red-400 hover:text-red-600"
+                          title="Delete"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Question Text -->
+                    <div class="mb-4">
+                      <input 
+                        type="text"
+                        name="question_text"
+                        value={question.question_text}
+                        phx-blur="update_question"
+                        phx-value-index={index}
+                        phx-value-field="question_text"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter your question..."
+                      />
+                    </div>
+
+                    <!-- Options for select/radio/checkbox -->
+                    <%= if question.question_type in ["select", "radio", "checkbox"] do %>
+                      <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Options (one per line)</label>
+                        <textarea 
+                          name="options"
+                          phx-blur="update_question"
+                          phx-value-index={index}
+                          phx-value-field="options"
+                          rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Option 1&#10;Option 2&#10;Option 3"
+                        ><%= if question.options, do: Enum.join(question.options, "\n"), else: "" %></textarea>
+                      </div>
+                    <% end %>
+
+                    <!-- Required Toggle -->
+                    <div class="flex items-center">
+                      <input 
+                        type="checkbox"
+                        id={"required-#{index}"}
+                        checked={question.required}
+                        phx-change="update_question"
+                        phx-value-index={index}
+                        phx-value-field="required"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label for={"required-#{index}"} class="ml-2 block text-sm text-gray-900">
+                        Required field
+                      </label>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+    <% end %>
+  </div>
+  
+  <!-- Preview Modal -->
+  <%= if @show_preview_modal do %>
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" phx-click="close_preview">
+      <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden" phx-click={JS.stop_propagation()}>
+        <!-- Modal Header -->
+        <div class="bg-blue-600 text-white px-6 py-4 flex items-center justify-between">
+          <div class="flex items-center">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <h2 class="text-xl font-semibold">Survey Preview</h2>
+          </div>
+          <button phx-click="close_preview" class="text-white hover:text-gray-200">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Modal Content -->
+        <div class="overflow-y-auto max-h-[calc(90vh-120px)]">
+          <div class="p-6">
+            <!-- Survey Info -->
+            <div class="mb-8">
+              <h1 class="text-2xl font-bold text-gray-900 mb-2"><%= @survey.title || "Untitled Survey" %></h1>
+              <%= if @survey.description && @survey.description != "" do %>
+                <p class="text-gray-600"><%= @survey.description %></p>
+              <% end %>
+              <div class="mt-4 flex items-center text-sm text-gray-500">
+                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                  <%= String.capitalize(@survey.status) %>
+                </span>
+                <span class="ml-4"><%= length(@questions) %> questions</span>
+              </div>
+            </div>
+            
+            <%= if length(@questions) == 0 do %>
+              <div class="text-center py-12 text-gray-500">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="text-lg font-medium mb-2">No Questions Added</h3>
+                <p>Add questions to your survey to see the preview.</p>
+              </div>
+            <% else %>
+              <!-- Questions Preview -->
+              <div class="space-y-6">
+                <%= for {question, index} <- Enum.with_index(@questions) do %>
+                  <div class="bg-gray-50 p-6 rounded-lg border">
+                    <div class="flex items-start justify-between mb-4">
+                      <div class="flex items-center">
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full mr-3">
+                          <%= index + 1 %>
+                        </span>
+                        <%= if question.required do %>
+                          <span class="text-red-500 text-sm font-medium">*</span>
+                        <% end %>
+                      </div>
+                      <span class="text-xs text-gray-500 bg-white px-2 py-1 rounded capitalize">
+                        <%= question.question_type %>
+                      </span>
+                    </div>
+                    
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                      <%= question.question_text || "Question #{index + 1}" %>
+                    </h3>
+                    
+                    <!-- Answer Input Based on Question Type -->
+                    <%= case question.question_type do %>
+                      <% "text" -> %>
+                        <input 
+                          type="text" 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Your answer..."
+                          value={Map.get(@preview_answers, index, "")}
+                          phx-blur="update_preview_answer"
+                          phx-value-question={index}
+                        />
+                      
+                      <% "textarea" -> %>
+                        <textarea 
+                          rows="4"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Your detailed answer..."
+                          phx-blur="update_preview_answer"
+                          phx-value-question={index}
+                        ><%= Map.get(@preview_answers, index, "") %></textarea>
+                      
+                      <% "radio" -> %>
+                        <%= if question.options && length(question.options) > 0 do %>
+                          <div class="space-y-2">
+                            <%= for {option, option_index} <- Enum.with_index(question.options) do %>
+                              <label class="flex items-center">
+                                <input 
+                                  type="radio" 
+                                  name={"preview_radio_#{index}"}
+                                  value={option}
+                                  checked={Map.get(@preview_answers, index) == option}
+                                  phx-click="update_preview_answer"
+                                  phx-value-question={index}
+                                  phx-value-answer={option}
+                                  class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                />
+                                <span class="ml-2 text-gray-700"><%= option %></span>
+                              </label>
+                            <% end %>
+                          </div>
+                        <% else %>
+                          <p class="text-gray-500 italic">No options defined</p>
+                        <% end %>
+                      
+                      <% "checkbox" -> %>
+                        <%= if question.options && length(question.options) > 0 do %>
+                          <div class="space-y-2">
+                            <%= for {option, option_index} <- Enum.with_index(question.options) do %>
+                              <label class="flex items-center">
+                                <input 
+                                  type="checkbox" 
+                                  value={option}
+                                  class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                />
+                                <span class="ml-2 text-gray-700"><%= option %></span>
+                              </label>
+                            <% end %>
+                          </div>
+                        <% else %>
+                          <p class="text-gray-500 italic">No options defined</p>
+                        <% end %>
+                      
+                      <% "select" -> %>
+                        <%= if question.options && length(question.options) > 0 do %>
+                          <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Choose an option...</option>
+                            <%= for option <- question.options do %>
+                              <option value={option}><%= option %></option>
+                            <% end %>
+                          </select>
+                        <% else %>
+                          <p class="text-gray-500 italic">No options defined</p>
+                        <% end %>
+                      
+                      <% _ -> %>
+                        <p class="text-gray-500 italic">Unknown question type: <%= question.question_type %></p>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+              
+              <!-- Mock Submit Button -->
+              <div class="mt-8 pt-6 border-t border-gray-200">
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors cursor-not-allowed opacity-75" disabled>
+                  <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                  </svg>
+                  Submit Survey (Preview Mode)
+                </button>
+                <p class="text-sm text-gray-500 mt-2">This is a preview - submissions are disabled.</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+        
+        <!-- Modal Footer -->
+        <div class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t">
+          <div class="text-sm text-gray-600">
+            <span class="font-medium"><%= length(@questions) %></span> questions • 
+            <span class="font-medium"><%= Enum.count(@questions, & &1.required) %></span> required
+          </div>
+          <button 
+            phx-click="close_preview"
+            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            Close Preview
+          </button>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,24 @@
+<.header>
+  Visit {@visit.id}
+  <:subtitle>This is a visit record from your database.</:subtitle>
+  <:actions>
+    <.link href={~p"/visits/#{@visit}/edit"}>
+      <.button>Edit visit</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Visit date">{@visit.visit_date}</:item>
+  <:item title="Visit type">{@visit.visit_type}</:item>
+  <:item title="Purpose">{@visit.purpose}</:item>
+  <:item title="Findings">{@visit.findings}</:item>
+  <:item title="Recommendations">{@visit.recommendations}</:item>
+  <:item title="Visited by">{@visit.visited_by}</:item>
+  <:item title="Gps latitude">{@visit.gps_latitude}</:item>
+  <:item title="Gps longitude">{@visit.gps_longitude}</:item>
+  <:item title="Status">{@visit.status}</:item>
+  <:item title="Notes">{@visit.notes}</:item>
+</.list>
+
+<.back navigate={~p"/visits"}>Back to visits</.back>

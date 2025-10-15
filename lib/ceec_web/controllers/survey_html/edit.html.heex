@@ -1,0 +1,39 @@
+<div class="bg-gray-50 min-h-screen">
+  <div class="max-w-4xl mx-auto p-6 space-y-6">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Edit Survey</h1>
+          <p class="text-gray-600 mt-1">Update survey details and settings for "<%= @survey.title %>"</p>
+        </div>
+        <div class="flex space-x-3">
+          <.link navigate={~p"/surveys/#{@survey}"} class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            <span>Back to Survey</span>
+          </.link>
+          <.link navigate={~p"/surveys"} class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span>All Surveys</span>
+          </.link>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="bg-white rounded-lg shadow-sm">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">Survey Information</h2>
+        <p class="text-sm text-gray-600">Update the basic information and settings for this survey</p>
+      </div>
+      
+      <div class="p-6">
+        <.survey_form changeset={@changeset} action={~p"/surveys/#{@survey}"} />
+      </div>
+    </div>
+  </div>
+</div>

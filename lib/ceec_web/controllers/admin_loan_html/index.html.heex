@@ -1,0 +1,237 @@
+<div class="px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header -->
+  <div class="sm:flex sm:items-center">
+    <div class="sm:flex-auto">
+      <h1 class="text-2xl font-semibold leading-6 text-gray-900">Loan Applications</h1>
+      <p class="mt-2 text-sm text-gray-700">Review and manage all loan applications submitted through the public portal.</p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center">
+              <span class="text-white text-sm font-medium"><%= @stats.total %></span>
+            </div>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Total Applications</dt>
+              <dd class="text-lg font-medium text-gray-900"><%= @stats.total %></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+              <span class="text-white text-sm font-medium"><%= @stats.pending %></span>
+            </div>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Pending Review</dt>
+              <dd class="text-lg font-medium text-gray-900"><%= @stats.pending %></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+              <span class="text-white text-sm font-medium"><%= @stats.approved %></span>
+            </div>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Approved</dt>
+              <dd class="text-lg font-medium text-gray-900"><%= @stats.approved %></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <span class="text-white text-sm font-medium"><%= @stats.disbursed %></span>
+            </div>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Disbursed</dt>
+              <dd class="text-lg font-medium text-gray-900"><%= @stats.disbursed %></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="mt-6 bg-white shadow rounded-lg p-6">
+    <form method="get" action={~p"/admin/loan-applications"} class="sm:flex sm:items-center sm:space-x-4">
+      <div class="sm:flex-auto">
+        <label for="search" class="block text-sm font-medium text-gray-700">Search</label>
+        <div class="mt-1">
+          <input
+            type="text"
+            name="search"
+            id="search"
+            value={@search}
+            class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+            placeholder="Search by applicant name, business, or ID..."
+          />
+        </div>
+      </div>
+      
+      <div>
+        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+        <div class="mt-1">
+          <select
+            name="status"
+            id="status"
+            class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+          >
+            <option value="all" selected={@status_filter == "all"}>All Status</option>
+            <option value="pending" selected={@status_filter == "pending"}>Pending Review</option>
+            <option value="approved" selected={@status_filter == "approved"}>Approved</option>
+            <option value="rejected" selected={@status_filter == "rejected"}>Rejected</option>
+            <option value="disbursed" selected={@status_filter == "disbursed"}>Disbursed</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="mt-4 sm:mt-6">
+        <button
+          type="submit"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Filter
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Loan Applications Table -->
+  <div class="mt-6 flow-root">
+    <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+      <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+        <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+          <%= if length(@loans) > 0 do %>
+            <table class="min-w-full divide-y divide-gray-300">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 sm:pl-6">Application</th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Applicant</th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Amount</th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Type</th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Applied</th>
+                  <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                    <span class="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 bg-white">
+                <%= for loan <- @loans do %>
+                  <tr class="hover:bg-gray-50">
+                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                      #<%= loan.id %>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                      <div>
+                        <div class="font-medium">
+                          <%= cond do %>
+                            <% loan.applicant_name -> %><%=loan.applicant_name %>
+                            <% loan.first_name && loan.last_name -> %><%= "#{loan.first_name} #{loan.last_name}" %>
+                            <% loan.created_by -> %><%= loan.created_by %>
+                            <% true -> %>Unknown
+                          <% end %>
+                        </div>
+                        <div class="text-gray-500">
+                          <%= loan.business_name || loan.project_name || "No business specified" %>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                      ZMW <%= Decimal.to_string(loan.amount, :normal) %>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                      <%= loan.loan_type %>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm">
+                      <span class={[
+                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                        case String.downcase(loan.status || "pending") do
+                          "pending" -> "bg-yellow-100 text-yellow-800"
+                          "approved" -> "bg-green-100 text-green-800" 
+                          "rejected" -> "bg-red-100 text-red-800"
+                          "disbursed" -> "bg-blue-100 text-blue-800"
+                          _ -> "bg-gray-100 text-gray-800"
+                        end
+                      ]}>
+                        <%= String.capitalize(loan.status || "pending") %>
+                      </span>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <%= Calendar.strftime(loan.inserted_at, "%b %d, %Y") %>
+                    </td>
+                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                      <.link 
+                        href={~p"/admin/loan-applications/#{loan.id}"} 
+                        class="text-indigo-600 hover:text-indigo-900 mr-4"
+                      >
+                        Review
+                      </.link>
+                      <%= if loan.status == "pending" do %>
+                        <form method="post" action={~p"/admin/loan-applications/#{loan.id}/approve"} class="inline">
+                          <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+                          <button 
+                            type="submit" 
+                            class="text-green-600 hover:text-green-900 mr-2"
+                            onclick="return confirm('Are you sure you want to approve this loan application?')"
+                          >
+                            Quick Approve
+                          </button>
+                        </form>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <div class="text-center py-12">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900">No loan applications</h3>
+              <p class="mt-1 text-sm text-gray-500">
+                <%= if @status_filter == "all" do %>
+                  No loan applications have been submitted yet.
+                <% else %>
+                  No loan applications with status "<%= @status_filter %>" found.
+                <% end %>
+              </p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

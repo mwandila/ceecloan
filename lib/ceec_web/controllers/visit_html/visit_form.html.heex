@@ -1,0 +1,18 @@
+<.simple_form :let={f} for={@changeset} action={@action}>
+  <.error :if={@changeset.action}>
+    Oops, something went wrong! Please check the errors below.
+  </.error>
+  <.input field={f[:visit_date]} type="date" label="Visit date" />
+  <.input field={f[:visit_type]} type="text" label="Visit type" />
+  <.input field={f[:purpose]} type="text" label="Purpose" />
+  <.input field={f[:findings]} type="text" label="Findings" />
+  <.input field={f[:recommendations]} type="text" label="Recommendations" />
+  <.input field={f[:visited_by]} type="text" label="Visited by" />
+  <.input field={f[:gps_latitude]} type="number" label="Gps latitude" step="any" />
+  <.input field={f[:gps_longitude]} type="number" label="Gps longitude" step="any" />
+  <.input field={f[:status]} type="text" label="Status" />
+  <.input field={f[:notes]} type="text" label="Notes" />
+  <:actions>
+    <.button>Save Visit</.button>
+  </:actions>
+</.simple_form>

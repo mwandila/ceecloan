@@ -1,0 +1,230 @@
+<div class="p-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Loan Management</h1>
+      <p class="text-gray-600 mt-1">Add, edit, and view all your loans in one place.</p>
+    </div>
+    
+    <!-- Date Navigation -->
+    <div class="flex items-center space-x-4">
+      <button class="p-2 hover:bg-gray-100 rounded-md">
+        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+      <span class="text-lg font-semibold text-gray-900">July 2024</span>
+      <button class="p-2 hover:bg-gray-100 rounded-md">
+        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <div class="flex flex-wrap gap-4">
+      <div class="flex items-center space-x-2">
+        <label class="text-sm font-medium text-gray-700">Status:</label>
+        <select class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option>All</option>
+          <option>Active</option>
+          <option>Repaid</option>
+          <option>Defaulted</option>
+        </select>
+      </div>
+      
+      <div class="flex items-center space-x-2">
+        <label class="text-sm font-medium text-gray-700">Project:</label>
+        <select class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option>All</option>
+          <option>Project Alpha</option>
+          <option>Project Beta</option>
+          <option>Project Gamma</option>
+        </select>
+      </div>
+      
+      <div class="flex items-center space-x-2">
+        <label class="text-sm font-medium text-gray-700">Loan Type:</label>
+        <select class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option>All</option>
+          <option>Microfinance</option>
+          <option>SME Loan</option>
+          <option>Agricultural</option>
+        </select>
+      </div>
+
+      <div class="ml-auto flex space-x-3">
+        <.link href={~p"/admin/mappings"} class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+          </svg>
+          <span>Manage Mappings</span>
+        </.link>
+        
+        <.link patch={~p"/loans/new"}>
+          <.button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+            + New Loan
+          </.button>
+        </.link>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loans Table -->
+  <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loan ID</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project / Type</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interest Rate</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Maturity Date</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="loans" phx-update="stream" class="bg-white divide-y divide-gray-200">
+          <tr :for={{id, loan} <- @streams.loans} id={id} class="hover:bg-gray-50 cursor-pointer" phx-click={JS.navigate(~p"/loans/#{loan}")}>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-blue-600">{loan.loan_id}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">
+                <%= if loan.project do %>
+                  <.link href={~p"/projects/#{loan.project}"} class="text-blue-600 hover:text-blue-800 font-medium">
+                    {loan.project.name}
+                  </.link>
+                <% else %>
+                  {loan.project_name}
+                <% end %>
+              </div>
+              <%= if loan.loan_type do %>
+                <div class="text-xs text-gray-500 mt-1">
+                  <span class={[
+                    "inline-flex px-2 py-1 text-xs font-medium rounded-full",
+                    loan.loan_type == "Microfinance" && "bg-yellow-100 text-yellow-800",
+                    loan.loan_type == "Agricultural" && "bg-green-100 text-green-800",
+                    loan.loan_type == "Housing" && "bg-blue-100 text-blue-800",
+                    loan.loan_type == "Health" && "bg-red-100 text-red-800",
+                    loan.loan_type == "SME Loan" && "bg-yellow-100 text-yellow-800",
+                    "bg-gray-100 text-gray-800"
+                  ]}>
+                    {loan.loan_type}
+                  </span>
+                </div>
+              <% end %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-semibold text-gray-900"><%= CeecWeb.Helpers.NumberHelper.format_currency(loan.amount) %></div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{loan.interest_rate}%</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">
+                <%= if loan.maturity_date do %>
+                  <%= Calendar.strftime(loan.maturity_date, "%Y-%m-%d") %>
+                <% end %>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class={[
+                "inline-flex px-2 py-1 text-xs font-semibold rounded-full",
+                loan.status == "Active" && "bg-green-100 text-green-800",
+                loan.status == "Repaid" && "bg-blue-100 text-blue-800", 
+                loan.status == "Defaulted" && "bg-red-100 text-red-800",
+                "bg-gray-100 text-gray-800"
+              ]}>
+                {loan.status}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <div class="flex space-x-2">
+                <.link href={~p"/loans/#{loan.id}/survey"} class="text-green-600 hover:text-green-900" title="Take Survey">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                  </svg>
+                </.link>
+                <.link patch={~p"/loans/#{loan}/edit"} class="text-indigo-600 hover:text-indigo-900">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </.link>
+                <.link
+                  phx-click={JS.push("delete", value: %{id: loan.id}) |> hide("##{id}")}
+                  data-confirm="Are you sure you want to delete this loan?"
+                  class="text-red-600 hover:text-red-900"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </.link>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+      <div class="flex-1 flex justify-between sm:hidden">
+        <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+          Previous
+        </button>
+        <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+          Next
+        </button>
+      </div>
+      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-gray-700">
+            Showing <span class="font-medium">1</span> to <span class="font-medium">5</span> of <span class="font-medium">5</span> results
+          </p>
+        </div>
+        <div>
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+              1
+            </button>
+            <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+              2
+            </button>
+            <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+              3
+            </button>
+            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+            <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+              10
+            </button>
+            <button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<.modal :if={@live_action in [:new, :edit]} id="loan-modal" show on_cancel={JS.patch(~p"/loans")}>
+  <.live_component
+    module={CeecWeb.LoanLive.FormComponent}
+    id={@loan.id || :new}
+    title={@page_title}
+    action={@live_action}
+    loan={@loan}
+    patch={~p"/loans"}
+  />
+</.modal>

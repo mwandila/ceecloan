@@ -1,0 +1,8 @@
+<.header>
+  New Visit
+  <:subtitle>Use this form to manage visit records in your database.</:subtitle>
+</.header>
+
+<.visit_form changeset={@changeset} action={~p"/visits"} />
+
+<.back navigate={~p"/visits"}>Back to visits</.back>

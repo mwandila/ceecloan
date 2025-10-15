@@ -1,0 +1,384 @@
+<div class="px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header -->
+  <div class="sm:flex sm:items-center sm:justify-between">
+    <div class="sm:flex-auto">
+      <h1 class="text-2xl font-semibold leading-6 text-gray-900">
+        Loan Application #<%= @loan.id %>
+      </h1>
+      <p class="mt-2 text-sm text-gray-700">
+        Review and manage this loan application.
+      </p>
+    </div>
+    <div class="mt-4 sm:mt-0 sm:ml-4">
+      <.link href={~p"/admin/loan-applications"} class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        ← Back to Applications
+      </.link>
+    </div>
+  </div>
+
+  <!-- Status Banner -->
+  <div class="mt-6">
+    <div class={[
+      "rounded-lg p-4",
+      case String.downcase(@loan.status || "pending") do
+        "pending" -> "bg-yellow-50 border-l-4 border-yellow-400"
+        "approved" -> "bg-green-50 border-l-4 border-green-400"
+        "rejected" -> "bg-red-50 border-l-4 border-red-400"
+        "disbursed" -> "bg-blue-50 border-l-4 border-blue-400"
+        _ -> "bg-gray-50 border-l-4 border-gray-400"
+      end
+    ]}>
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <span class={[
+            "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
+            case String.downcase(@loan.status || "pending") do
+              "pending" -> "bg-yellow-100 text-yellow-800"
+              "approved" -> "bg-green-100 text-green-800"
+              "rejected" -> "bg-red-100 text-red-800"
+              "disbursed" -> "bg-blue-100 text-blue-800"
+              _ -> "bg-gray-100 text-gray-800"
+            end
+          ]}>
+            <%= String.capitalize(@loan.status || "pending") %>
+          </span>
+        </div>
+        <div class="ml-3">
+          <h3 class={[
+            "text-sm font-medium",
+            case String.downcase(@loan.status || "pending") do
+              "pending" -> "text-yellow-800"
+              "approved" -> "text-green-800"
+              "rejected" -> "text-red-800"
+              "disbursed" -> "text-blue-800"
+              _ -> "text-gray-800"
+            end
+          ]}>
+            <%= case String.downcase(@loan.status || "pending") do %>
+              <% "pending" -> %>This application is awaiting review
+              <% "approved" -> %>This application has been approved
+              <% "rejected" -> %>This application has been rejected
+              <% "disbursed" -> %>Funds have been disbursed for this application
+              <% _ -> %>Application status: <%= @loan.status %>
+            <% end %>
+          </h3>
+          <%= if @loan.rejection_reason do %>
+            <div class="mt-2 text-sm text-red-700">
+              <strong>Rejection Reason:</strong> <%= @loan.rejection_reason %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <!-- Application Details (Left Column) -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Applicant Information -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50">
+          <h3 class="text-lg leading-6 font-medium text-gray-900">Applicant Information</h3>
+        </div>
+        <div class="px-4 py-5 sm:p-6">
+          <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+            <div>
+              <dt class="text-sm font-medium text-gray-500">Full Name</dt>
+              <dd class="mt-1 text-sm text-gray-900">
+                <%= cond do %>
+                  <% @loan.applicant_name -> %><%= @loan.applicant_name %>
+                  <% @loan.first_name && @loan.last_name -> %><%= "#{@loan.first_name} #{@loan.last_name}" %>
+                  <% @loan.created_by -> %><%= @loan.created_by %> (Admin Created)
+                  <% true -> %>Not specified
+                <% end %>
+              </dd>
+            </div>
+            
+            <%= if @loan.phone do %>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Phone Number</dt>
+                <dd class="mt-1 text-sm text-gray-900"><%= @loan.phone %></dd>
+              </div>
+            <% end %>
+            
+            <%= if @loan.email do %>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Email Address</dt>
+                <dd class="mt-1 text-sm text-gray-900"><%= @loan.email %></dd>
+              </div>
+            <% end %>
+            
+            <%= if @loan.nrc do %>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">NRC Number</dt>
+                <dd class="mt-1 text-sm text-gray-900"><%= @loan.nrc %></dd>
+              </div>
+            <% end %>
+            
+            <%= if @loan.province do %>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Location</dt>
+                <dd class="mt-1 text-sm text-gray-900">
+                  <%= [@loan.district, @loan.province] |> Enum.reject(&is_nil/1) |> Enum.join(", ") %>
+                  <%= if @loan.constituency do %>
+                    <div class="text-xs text-gray-500">Constituency: <%= @loan.constituency %></div>
+                  <% end %>
+                </dd>
+              </div>
+            <% end %>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Business Information -->
+      <%= if @loan.business_name || @loan.business_type do %>
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+          <div class="px-4 py-5 sm:px-6 bg-gray-50">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Business Information</h3>
+          </div>
+          <div class="px-4 py-5 sm:p-6">
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+              <%= if @loan.business_name do %>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Business Name</dt>
+                  <dd class="mt-1 text-sm text-gray-900"><%= @loan.business_name %></dd>
+                </div>
+              <% end %>
+              
+              <%= if @loan.business_type do %>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Business Type</dt>
+                  <dd class="mt-1 text-sm text-gray-900"><%= @loan.business_type %></dd>
+                </div>
+              <% end %>
+              
+              <%= if @loan.years_in_business do %>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Years in Business</dt>
+                  <dd class="mt-1 text-sm text-gray-900"><%= @loan.years_in_business %> years</dd>
+                </div>
+              <% end %>
+            </dl>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Loan Details -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50">
+          <h3 class="text-lg leading-6 font-medium text-gray-900">Loan Details</h3>
+        </div>
+        <div class="px-4 py-5 sm:p-6">
+          <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+            <div>
+              <dt class="text-sm font-medium text-gray-500">Loan Amount</dt>
+              <dd class="mt-1 text-lg font-semibold text-indigo-600">
+                ZMW <%= Decimal.to_string(@loan.amount, :normal) %>
+              </dd>
+            </div>
+            
+            <div>
+              <dt class="text-sm font-medium text-gray-500">Loan Type</dt>
+              <dd class="mt-1 text-sm text-gray-900"><%= @loan.loan_type %></dd>
+            </div>
+            
+            <div>
+              <dt class="text-sm font-medium text-gray-500">Application Date</dt>
+              <dd class="mt-1 text-sm text-gray-900">
+                <%= Calendar.strftime(@loan.inserted_at, "%B %d, %Y at %I:%M %p") %>
+              </dd>
+            </div>
+            
+            <%= cond do %>
+              <% @loan.project -> %>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Associated Project</dt>
+                  <dd class="mt-1 text-sm text-gray-900"><%= @loan.project.name %></dd>
+                </div>
+              <% @loan.project_name -> %>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Associated Project</dt>
+                  <dd class="mt-1 text-sm text-gray-900"><%= @loan.project_name %></dd>
+                </div>
+              <% true -> %>
+                <!-- No project information available -->
+            <% end %>
+          </dl>
+          
+          <%= if @loan.purpose do %>
+            <div class="mt-6">
+              <dt class="text-sm font-medium text-gray-500">Purpose of Loan</dt>
+              <dd class="mt-2 text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
+                <%= @loan.purpose %>
+              </dd>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions (Right Column) -->
+    <div class="space-y-6">
+      <!-- Quick Actions -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50">
+          <h3 class="text-lg leading-6 font-medium text-gray-900">Actions</h3>
+        </div>
+        <div class="px-4 py-5 sm:p-6">
+          <%= if @loan.status == "pending" do %>
+            <!-- Approve Button -->
+            <form method="post" action={~p"/admin/loan-applications/#{@loan.id}/approve"} class="mb-4">
+              <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+              <button 
+                type="submit" 
+                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                onclick="return confirm('Are you sure you want to approve this loan application?')"
+              >
+                ✓ Approve Application
+              </button>
+            </form>
+
+            <!-- Reject Button with Reason -->
+            <details class="mb-4">
+              <summary class="w-full flex justify-center py-2 px-4 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer">
+                ✗ Reject Application
+              </summary>
+              <form method="post" action={~p"/admin/loan-applications/#{@loan.id}/reject"} class="mt-3">
+                <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+                <div>
+                  <label for="rejection_reason" class="block text-sm font-medium text-gray-700">
+                    Rejection Reason
+                  </label>
+                  <textarea
+                    id="rejection_reason"
+                    name="admin_loan[rejection_reason]"
+                    rows="3"
+                    required
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                    placeholder="Please provide a reason for rejection..."
+                  ></textarea>
+                </div>
+                <button 
+                  type="submit" 
+                  class="mt-3 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  onclick="return confirm('Are you sure you want to reject this loan application?')"
+                >
+                  Reject with Reason
+                </button>
+              </form>
+            </details>
+          <% end %>
+
+          <%= if @loan.status == "approved" do %>
+            <!-- Disburse Button -->
+            <form method="post" action={~p"/admin/loan-applications/#{@loan.id}/disburse"} class="mb-4">
+              <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+              <button 
+                type="submit" 
+                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                onclick="return confirm('Are you sure you want to mark this loan as disbursed?')"
+              >
+                💰 Mark as Disbursed
+              </button>
+            </form>
+          <% end %>
+
+          <!-- Edit Link -->
+          <.link 
+            href={~p"/admin/loan-applications/#{@loan.id}/edit"} 
+            class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            ✏️ Edit Details
+          </.link>
+        </div>
+      </div>
+
+      <!-- Application Timeline -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50">
+          <h3 class="text-lg leading-6 font-medium text-gray-900">Timeline</h3>
+        </div>
+        <div class="px-4 py-5 sm:p-6">
+          <div class="flow-root">
+            <ul class="-mb-8">
+              <!-- Application Submitted -->
+              <li>
+                <div class="relative pb-8">
+                  <div class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></div>
+                  <div class="relative flex space-x-3">
+                    <div>
+                      <span class="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                      </span>
+                    </div>
+                    <div class="min-w-0 flex-1 pt-1.5">
+                      <div>
+                        <p class="text-sm text-gray-600">
+                          Application submitted
+                        </p>
+                        <p class="text-xs text-gray-500">
+                          <%= Calendar.strftime(@loan.inserted_at, "%B %d, %Y at %I:%M %p") %>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+
+              <!-- Status Changes -->
+              <%= if @loan.status != "pending" do %>
+                <li>
+                  <div class="relative">
+                    <div class="relative flex space-x-3">
+                      <div>
+                        <span class={[
+                          "h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white",
+                          case String.downcase(@loan.status) do
+                            "approved" -> "bg-green-500"
+                            "rejected" -> "bg-red-500"
+                            "disbursed" -> "bg-blue-500"
+                            _ -> "bg-gray-500"
+                          end
+                        ]}>
+                          <%= case String.downcase(@loan.status) do %>
+                            <% "approved" -> %>
+                              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                              </svg>
+                            <% "rejected" -> %>
+                              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                              </svg>
+                            <% "disbursed" -> %>
+                              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                              </svg>
+                            <% _ -> %>
+                              <div class="w-2 h-2 bg-white rounded-full"></div>
+                          <% end %>
+                        </span>
+                      </div>
+                      <div class="min-w-0 flex-1 pt-1.5">
+                        <div>
+                          <p class="text-sm text-gray-600">
+                            Application <%= @loan.status %>
+                          </p>
+                          <p class="text-xs text-gray-500">
+                            <%= Calendar.strftime(@loan.updated_at, "%B %d, %Y at %I:%M %p") %>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

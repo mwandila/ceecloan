@@ -1,0 +1,35 @@
+<.header>
+  Loan {@loan.id}
+  <:subtitle>This is a loan record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/loans/#{@loan}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit loan</.button>
+    </.link>
+    <.link href={~p"/loans/#{@loan.id}/survey/1"} class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium ml-2">
+      Assessment Survey
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Loan">{@loan.loan_id}</:item>
+  <:item title="Project name">{@loan.project_name}</:item>
+  <:item title="Amount">{@loan.amount}</:item>
+  <:item title="Interest rate">{@loan.interest_rate}</:item>
+  <:item title="Maturity date">{@loan.maturity_date}</:item>
+  <:item title="Status">{@loan.status}</:item>
+  <:item title="Created by">{@loan.created_by}</:item>
+</.list>
+
+<.back navigate={~p"/loans"}>Back to loans</.back>
+
+<.modal :if={@live_action == :edit} id="loan-modal" show on_cancel={JS.patch(~p"/loans/#{@loan}")}>
+  <.live_component
+    module={CeecWeb.LoanLive.FormComponent}
+    id={@loan.id}
+    title={@page_title}
+    action={@live_action}
+    loan={@loan}
+    patch={~p"/loans/#{@loan}"}
+  />
+</.modal>

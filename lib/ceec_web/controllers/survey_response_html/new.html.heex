@@ -1,0 +1,431 @@
+<div class="flex flex-col min-h-screen">
+  
+  <main class="flex-grow">
+    <div class="mx-auto max-w-4xl py-10 px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col gap-8">
+        <div>
+          <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold tracking-tight text-stone-900 dark:text-stone-100 mb-4">CEEC Data Collection Form</h1>
+            <p class="text-lg text-stone-600 dark:text-stone-400">Please fill in the required information to complete the data collection process.</p>
+          </div>
+          
+          <!-- Multi-Step Progress Indicator -->
+          <CeecWeb.Components.Stepper.stepper 
+            current_step={1} 
+            steps={[
+              %{id: 1, title: "Visit Information"},
+              %{id: 2, title: "Project Location"},
+              %{id: 3, title: "Beneficiary Profile"},
+              %{id: 4, title: "Funding Details"},
+              %{id: 5, title: "Economic Impact"},
+              %{id: 6, title: "Evaluation"}
+            ]} 
+          />
+        </div>
+
+        <div class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-stone-200 dark:border-stone-800">
+          <div class="p-6 border-b border-stone-200 dark:border-stone-800">
+            <h3 class="text-lg font-bold text-stone-900 dark:text-stone-100">CEEC M&E Data Collection</h3>
+          </div>
+          
+          <form id="ceec-survey-form" data-stepper-form class="p-6" method="post" action={~p"/surveys/#{@survey.id}/responses"}>
+            <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()}/>
+            
+            <!-- Error display section -->
+            <%= if assigns[:changeset] && @changeset.action do %>
+              <div class="rounded-md bg-red-50 p-4 mb-6">
+                <div class="flex">
+                  <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
+                    <div class="mt-2 text-sm text-red-700">
+                      <ul class="list-disc pl-5 space-y-1">
+                        <%= for {field, message} <- @changeset.errors do %>
+                          <li><%= Phoenix.Naming.humanize(field) %> <%= message %></li>
+                        <% end %>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+            
+            <!-- Step 1: Visit Information -->
+            <div data-step="1" class="space-y-6">
+              <h4 class="text-lg font-semibold text-stone-900 dark:text-stone-100 border-b border-stone-200 pb-2">Step 1: Visit Information</h4>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                <div class="md:col-span-2">
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-3">Visit Type</label>
+                  <div class="flex gap-4">
+                    <label class="flex items-center px-4 py-3 rounded-lg border-2 border-stone-300 dark:border-stone-700 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-600 has-[:checked]:text-indigo-900 transition-all">
+                      <input class="sr-only" name="survey_response[visit_type]" type="radio" value="monitoring" required/>
+                      <span class="text-sm font-medium">Monitoring Visit</span>
+                    </label>
+                    <label class="flex items-center px-4 py-3 rounded-lg border-2 border-stone-300 dark:border-stone-700 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-600 has-[:checked]:text-indigo-900 transition-all">
+                      <input class="sr-only" name="survey_response[visit_type]" type="radio" value="evaluation" required/>
+                      <span class="text-sm font-medium">Evaluation Visit</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="interviewer_name">Interviewer Name</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="interviewer_name" name="survey_response[interviewer_name]" placeholder="Enter interviewer's name" type="text" required/>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="visit_date">Date of Visit</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="visit_date" name="survey_response[visit_date]" type="date" required/>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Step 2: Project Location -->
+            <div data-step="2" class="space-y-6" style="display: none;">
+              <h4 class="text-lg font-semibold text-stone-900 dark:text-stone-100 border-b border-stone-200 pb-2">Step 2: Project Location</h4>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="province">Province</label>
+                  <select class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="province" name="survey_response[province]" required>
+                    <option value="">Select Province</option>
+                    <option value="Central">Central Province</option>
+                    <option value="Copperbelt">Copperbelt Province</option>
+                    <option value="Eastern">Eastern Province</option>
+                    <option value="Luapula">Luapula Province</option>
+                    <option value="Lusaka">Lusaka Province</option>
+                    <option value="Muchinga">Muchinga Province</option>
+                    <option value="Northern">Northern Province</option>
+                    <option value="North-Western">North-Western Province</option>
+                    <option value="Southern">Southern Province</option>
+                    <option value="Western">Western Province</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="district">District</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="district" name="survey_response[district]" placeholder="Enter district name" type="text" required/>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="constituency">Constituency</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="constituency" name="survey_response[constituency]" placeholder="Enter constituency name" type="text" required/>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="gps_coordinates">GPS Coordinates</label>
+                  <div class="relative">
+                    <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3 pl-10" id="gps_coordinates" name="survey_response[gps_coordinates]" placeholder="-15.4067, 28.2871" type="text"/>
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">📍</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Step 3: Beneficiary Information -->
+            <div data-step="3" class="space-y-6" style="display: none;">
+              <h4 class="text-lg font-semibold text-stone-900 dark:text-stone-100 border-b border-stone-200 pb-2">Step 3: Beneficiary Profile</h4>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="beneficiary_name">Beneficiary Name</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="beneficiary_name" name="survey_response[beneficiary_name]" placeholder="Enter beneficiary's full name" type="text" required/>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="beneficiary_id_number">ID Number</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="beneficiary_id_number" name="survey_response[beneficiary_id_number]" placeholder="Enter ID number" type="text" required/>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="beneficiary_phone">Phone Number</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="beneficiary_phone" name="survey_response[beneficiary_phone]" placeholder="Enter phone number" type="tel" required/>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="gender">Gender</label>
+                  <select class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="gender" name="survey_response[gender]" required>
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="age">Age</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="age" name="survey_response[age]" placeholder="Enter age" type="number" min="18" max="100" required/>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="business_name">Business Name</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="business_name" name="survey_response[business_name]" placeholder="Enter business name" type="text"/>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="business_type">Business Type</label>
+                  <select class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="business_type" name="survey_response[business_type]" required>
+                    <option value="">Select business type</option>
+                    <option value="retail">Retail/Trading</option>
+                    <option value="agriculture">Agriculture</option>
+                    <option value="manufacturing">Manufacturing</option>
+                    <option value="services">Services</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="years_in_business">Years in Business</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="years_in_business" name="survey_response[years_in_business]" placeholder="Enter years in business" type="number" min="0" max="50"/>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Step 4: Funding Details -->
+            <div data-step="4" class="space-y-6" style="display: none;">
+              <h4 class="text-lg font-semibold text-stone-900 dark:text-stone-100 border-b border-stone-200 pb-2">Step 4: Funding Details</h4>
+              
+              <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                  <div>
+                    <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="loan_amount">Loan Amount (ZMW)</label>
+                    <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="loan_amount" name="survey_response[loan_amount]" placeholder="Enter loan amount" type="number" step="500" min="0"/>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="loan_purpose">Loan Purpose</label>
+                    <select class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="loan_purpose" name="survey_response[loan_purpose]">
+                      <option value="">Select loan purpose</option>
+                      <option value="business_startup">Business Startup</option>
+                      <option value="business_expansion">Business Expansion</option>
+                      <option value="equipment_purchase">Equipment Purchase</option>
+                      <option value="working_capital">Working Capital</option>
+                      <option value="agricultural_inputs">Agricultural Inputs</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="repayment_status">Repayment Status</label>
+                    <select class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="repayment_status" name="survey_response[repayment_status]">
+                      <option value="">Select repayment status</option>
+                      <option value="on_time">On Time</option>
+                      <option value="overdue">Overdue</option>
+                      <option value="defaulted">Defaulted</option>
+                      <option value="fully_paid">Fully Paid</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Step 5: Economic Impact -->
+            <div data-step="5" class="space-y-6" style="display: none;">
+              <h4 class="text-lg font-semibold text-stone-900 dark:text-stone-100 border-b border-stone-200 pb-2">Step 5: Economic Impact</h4>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="employees_before">Employees Before</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="employees_before" name="survey_response[employees_before]" placeholder="Number of employees before" type="number" min="0"/>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="employees_after">Employees After</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="employees_after" name="survey_response[employees_after]" placeholder="Number of employees after" type="number" min="0"/>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="revenue_before">Monthly Revenue Before (ZMW)</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="revenue_before" name="survey_response[revenue_before]" placeholder="Monthly revenue before" type="number" step="100" min="0"/>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="revenue_after">Monthly Revenue After (ZMW)</label>
+                  <input class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="revenue_after" name="survey_response[revenue_after]" placeholder="Monthly revenue after" type="number" step="100" min="0"/>
+                </div>
+              </div>
+              
+              <!-- Social Impact Distribution -->
+              <div class="mt-6">
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-4">Employment Distribution by Demographics</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="space-y-4">
+                    <h5 class="text-sm font-medium text-stone-600 dark:text-stone-400">Before Project</h5>
+                    <div class="space-y-3">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-stone-700 dark:text-stone-300">Youth (18-35)</span>
+                        <input class="w-20 rounded border-stone-300 dark:border-stone-700 focus:border-indigo-600 focus:ring-indigo-600" name="survey_response[social_distribution][youth_before]" type="number" min="0" placeholder="0"/>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-stone-700 dark:text-stone-300">Women</span>
+                        <input class="w-20 rounded border-stone-300 dark:border-stone-700 focus:border-indigo-600 focus:ring-indigo-600" name="survey_response[social_distribution][women_before]" type="number" min="0" placeholder="0"/>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-stone-700 dark:text-stone-300">Men</span>
+                        <input class="w-20 rounded border-stone-300 dark:border-stone-700 focus:border-indigo-600 focus:ring-indigo-600" name="survey_response[social_distribution][men_before]" type="number" min="0" placeholder="0"/>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-stone-700 dark:text-stone-300">PWD</span>
+                        <input class="w-20 rounded border-stone-300 dark:border-stone-700 focus:border-indigo-600 focus:ring-indigo-600" name="survey_response[social_distribution][pwd_before]" type="number" min="0" placeholder="0"/>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="space-y-4">
+                    <h5 class="text-sm font-medium text-stone-600 dark:text-stone-400">After Project</h5>
+                    <div class="space-y-3">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-stone-700 dark:text-stone-300">Youth (18-35)</span>
+                        <input class="w-20 rounded border-stone-300 dark:border-stone-700 focus:border-indigo-600 focus:ring-indigo-600" name="survey_response[social_distribution][youth_after]" type="number" min="0" placeholder="0"/>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-stone-700 dark:text-stone-300">Women</span>
+                        <input class="w-20 rounded border-stone-300 dark:border-stone-700 focus:border-indigo-600 focus:ring-indigo-600" name="survey_response[social_distribution][women_after]" type="number" min="0" placeholder="0"/>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-stone-700 dark:text-stone-300">Men</span>
+                        <input class="w-20 rounded border-stone-300 dark:border-stone-700 focus:border-indigo-600 focus:ring-indigo-600" name="survey_response[social_distribution][men_after]" type="number" min="0" placeholder="0"/>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-stone-700 dark:text-stone-300">PWD</span>
+                        <input class="w-20 rounded border-stone-300 dark:border-stone-700 focus:border-indigo-600 focus:ring-indigo-600" name="survey_response[social_distribution][pwd_after]" type="number" min="0" placeholder="0"/>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Step 6: Evaluation -->
+            <div data-step="6" class="space-y-6" style="display: none;">
+              <h4 class="text-lg font-semibold text-stone-900 dark:text-stone-100 border-b border-stone-200 pb-2">Step 6: Project Evaluation</h4>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="project_rating">Project Rating (1-5)</label>
+                  <select class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="project_rating" name="survey_response[project_rating]">
+                    <option value="">Rate the project</option>
+                    <option value="1">1 - Poor</option>
+                    <option value="2">2 - Fair</option>
+                    <option value="3">3 - Good</option>
+                    <option value="4">4 - Very Good</option>
+                    <option value="5">5 - Excellent</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="impact_rating">Impact Rating (1-5)</label>
+                  <select class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="impact_rating" name="survey_response[impact_rating]">
+                    <option value="">Rate the impact</option>
+                    <option value="1">1 - No Impact</option>
+                    <option value="2">2 - Low Impact</option>
+                    <option value="3">3 - Moderate Impact</option>
+                    <option value="4">4 - High Impact</option>
+                    <option value="5">5 - Very High Impact</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="sustainability_rating">Sustainability Rating (1-5)</label>
+                  <select class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="sustainability_rating" name="survey_response[sustainability_rating]">
+                    <option value="">Rate sustainability</option>
+                    <option value="1">1 - Not Sustainable</option>
+                    <option value="2">2 - Low Sustainability</option>
+                    <option value="3">3 - Moderately Sustainable</option>
+                    <option value="4">4 - Highly Sustainable</option>
+                    <option value="5">5 - Very Highly Sustainable</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="overall_satisfaction">Overall Satisfaction (1-5)</label>
+                  <select class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm py-3" id="overall_satisfaction" name="survey_response[overall_satisfaction]">
+                    <option value="">Rate overall satisfaction</option>
+                    <option value="1">1 - Very Dissatisfied</option>
+                    <option value="2">2 - Dissatisfied</option>
+                    <option value="3">3 - Neutral</option>
+                    <option value="4">4 - Satisfied</option>
+                    <option value="5">5 - Very Satisfied</option>
+                  </select>
+                </div>
+                
+                <div class="md:col-span-2">
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">Would you recommend this project to others?</label>
+                  <div class="flex gap-4">
+                    <label class="flex items-center">
+                      <input class="form-radio text-indigo-600 focus:ring-indigo-600 mr-2" name="survey_response[would_recommend]" type="radio" value="true"/>
+                      <span class="text-sm text-stone-700 dark:text-stone-300">Yes</span>
+                    </label>
+                    <label class="flex items-center">
+                      <input class="form-radio text-indigo-600 focus:ring-indigo-600 mr-2" name="survey_response[would_recommend]" type="radio" value="false"/>
+                      <span class="text-sm text-stone-700 dark:text-stone-300">No</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div class="md:col-span-2">
+                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2" for="recommendations">Recommendations & Comments</label>
+                  <textarea class="block w-full rounded-lg border-stone-300 dark:border-stone-700 bg-background-light dark:bg-background-dark/50 focus:border-indigo-600 focus:ring-indigo-600 sm:text-sm" id="recommendations" name="survey_response[recommendations]" placeholder="Please provide any recommendations or additional comments" rows="4"></textarea>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Step Navigation -->
+            <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+              <div>
+                <button
+                  type="button"
+                  data-action="prev-step"
+                  class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  style="display: none;"
+                >
+                  <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Previous
+                </button>
+              </div>
+              
+              <div class="flex items-center space-x-2">
+                <span class="text-sm text-gray-500" data-step-counter>
+                  Step 1 of 6
+                </span>
+              </div>
+              
+              <div>
+                <button
+                  type="button"
+                  data-action="next-step"
+                  class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Next
+                  <svg class="ml-2 -mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+                
+                <button
+                  type="submit"
+                  class="inline-flex items-center px-6 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                  style="display: none;"
+                  data-action="submit-form"
+                >
+                  <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Submit Survey
+                </button>
+              </div>
+            </div>
+            
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

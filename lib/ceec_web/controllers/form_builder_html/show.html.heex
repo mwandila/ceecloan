@@ -1,0 +1,154 @@
+<div class="flex flex-col min-h-screen">
+  <main class="flex-grow">
+    <div class="mx-auto max-w-4xl py-6 px-4 sm:px-6 lg:px-8">
+      <div class="mb-8">
+        <nav class="flex" aria-label="Breadcrumb">
+          <ol class="flex items-center space-x-2">
+            <li>
+              <.link navigate={~p"/form-builder"} class="text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300">
+                Form Builder
+              </.link>
+            </li>
+            <li class="flex items-center">
+              <svg class="flex-shrink-0 h-4 w-4 text-stone-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+              <span class="ml-2 text-stone-900 dark:text-stone-100 font-medium"><%= @form.name %></span>
+            </li>
+          </ol>
+        </nav>
+      </div>
+
+      <div class="bg-white dark:bg-background-dark shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-stone-200 dark:border-stone-800">
+          <div class="flex justify-between items-start">
+            <div>
+              <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100"><%= @form.name %></h1>
+              <p class="mt-1 text-sm text-stone-600 dark:text-stone-400">
+                <%= @form.description %>
+              </p>
+            </div>
+            <div class="flex space-x-3">
+              <.link 
+                navigate={~p"/form-builder/#{@form}/builder"} 
+                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit Form
+              </.link>
+              <.link 
+                navigate={~p"/form-builder/#{@form}/preview"} 
+                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Preview
+              </.link>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 class="text-lg font-medium text-stone-900 dark:text-stone-100 mb-4">Form Details</h3>
+              <dl class="space-y-3">
+                <div>
+                  <dt class="text-sm font-medium text-stone-500 dark:text-stone-400">Type</dt>
+                  <dd class="text-sm text-stone-900 dark:text-stone-100 capitalize"><%= @form.form_type %></dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-stone-500 dark:text-stone-400">Version</dt>
+                  <dd class="text-sm text-stone-900 dark:text-stone-100"><%= @form.version %></dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-stone-500 dark:text-stone-400">Status</dt>
+                  <dd class="text-sm text-stone-900 dark:text-stone-100 capitalize">
+                    <span class={[
+                      "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                      case @form.status do
+                        "draft" -> "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                        "published" -> "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                        "archived" -> "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                        _ -> "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                      end
+                    ]}>
+                      <%= @form.status %>
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-stone-500 dark:text-stone-400">Language</dt>
+                  <dd class="text-sm text-stone-900 dark:text-stone-100 uppercase"><%= @form.language %></dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-stone-500 dark:text-stone-400">Created By</dt>
+                  <dd class="text-sm text-stone-900 dark:text-stone-100"><%= @form.created_by %></dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-stone-500 dark:text-stone-400">Created</dt>
+                  <dd class="text-sm text-stone-900 dark:text-stone-100">
+                    <%= Calendar.strftime(@form.inserted_at, "%B %d, %Y at %I:%M %p") %>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <div>
+              <h3 class="text-lg font-medium text-stone-900 dark:text-stone-100 mb-4">Form Structure</h3>
+              <%= if @form.form_schema && @form.form_schema["sections"] do %>
+                <div class="space-y-3">
+                  <%= for section <- @form.form_schema["sections"] do %>
+                    <div class="border border-stone-200 dark:border-stone-700 rounded-lg p-3">
+                      <h4 class="font-medium text-stone-900 dark:text-stone-100"><%= section["name"] %></h4>
+                      <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
+                        <%= length(section["fields"] || []) %> fields
+                      </p>
+                      <%= if section["fields"] && length(section["fields"]) > 0 do %>
+                        <div class="mt-2 flex flex-wrap gap-1">
+                          <%= for field <- Enum.take(section["fields"], 3) do %>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
+                              <%= field["type"] %>
+                            </span>
+                          <% end %>
+                          <%= if length(section["fields"]) > 3 do %>
+                            <span class="text-xs text-stone-500">+<%= length(section["fields"]) - 3 %> more</span>
+                          <% end %>
+                        </div>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+              <% else %>
+                <div class="text-center py-8 text-stone-500 dark:text-stone-400">
+                  <svg class="mx-auto h-12 w-12 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p class="mt-2 text-sm">No form structure defined</p>
+                  <p class="text-xs">Use the form builder to add questions and sections</p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <%= if @form.tags && length(@form.tags) > 0 do %>
+            <div class="mt-6 pt-6 border-t border-stone-200 dark:border-stone-800">
+              <h3 class="text-lg font-medium text-stone-900 dark:text-stone-100 mb-3">Tags</h3>
+              <div class="flex flex-wrap gap-2">
+                <%= for tag <- @form.tags do %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-200">
+                    <%= tag %>
+                  </span>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

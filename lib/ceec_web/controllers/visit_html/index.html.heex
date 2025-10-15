@@ -1,0 +1,32 @@
+<.header>
+  Listing Visits
+  <:actions>
+    <.link href={~p"/visits/new"}>
+      <.button>New Visit</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table id="visits" rows={@visits} row_click={&JS.navigate(~p"/visits/#{&1}")}>
+  <:col :let={visit} label="Visit date">{visit.visit_date}</:col>
+  <:col :let={visit} label="Visit type">{visit.visit_type}</:col>
+  <:col :let={visit} label="Purpose">{visit.purpose}</:col>
+  <:col :let={visit} label="Findings">{visit.findings}</:col>
+  <:col :let={visit} label="Recommendations">{visit.recommendations}</:col>
+  <:col :let={visit} label="Visited by">{visit.visited_by}</:col>
+  <:col :let={visit} label="Gps latitude">{visit.gps_latitude}</:col>
+  <:col :let={visit} label="Gps longitude">{visit.gps_longitude}</:col>
+  <:col :let={visit} label="Status">{visit.status}</:col>
+  <:col :let={visit} label="Notes">{visit.notes}</:col>
+  <:action :let={visit}>
+    <div class="sr-only">
+      <.link navigate={~p"/visits/#{visit}"}>Show</.link>
+    </div>
+    <.link navigate={~p"/visits/#{visit}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={visit}>
+    <.link href={~p"/visits/#{visit}"} method="delete" data-confirm="Are you sure?">
+      Delete
+    </.link>
+  </:action>
+</.table>

@@ -1,0 +1,347 @@
+<div class="px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header -->
+  <div class="sm:flex sm:items-center sm:justify-between">
+    <div class="sm:flex-auto">
+      <h1 class="text-2xl font-semibold leading-6 text-gray-900">
+        Edit Loan Application #<%= @loan.id %>
+      </h1>
+      <p class="mt-2 text-sm text-gray-700">
+        Update loan application details and status.
+      </p>
+    </div>
+    <div class="mt-4 sm:mt-0 sm:ml-4 flex space-x-3">
+      <.link href={~p"/admin/loan-applications/#{@loan.id}"} class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        Cancel
+      </.link>
+    </div>
+  </div>
+
+  <!-- Edit Form -->
+  <div class="mt-8">
+    <div class="bg-white shadow rounded-lg">
+      <form action={~p"/admin/loan-applications/#{@loan.id}"} method="post">
+        <input type="hidden" name="_method" value="put" />
+        <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+        
+        <div class="px-6 py-6 space-y-8">
+          <!-- Status Section -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Application Status</h3>
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label for="loan_status" class="block text-sm font-medium text-gray-700">Status</label>
+                <select
+                  id="loan_status"
+                  name="loan[status]"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                >
+                  <option value="pending" selected={@loan.status == "pending"}>Pending</option>
+                  <option value="approved" selected={@loan.status == "approved"}>Approved</option>
+                  <option value="rejected" selected={@loan.status == "rejected"}>Rejected</option>
+                  <option value="disbursed" selected={@loan.status == "disbursed"}>Disbursed</option>
+                </select>
+              </div>
+              
+              <%= if @loan.rejection_reason do %>
+                <div>
+                  <label for="loan_rejection_reason" class="block text-sm font-medium text-gray-700">Rejection Reason</label>
+                  <textarea
+                    id="loan_rejection_reason"
+                    name="loan[rejection_reason]"
+                    rows="3"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    placeholder="Reason for rejection (if applicable)"
+                  ><%= @loan.rejection_reason %></textarea>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Applicant Information -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Applicant Information</h3>
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label for="loan_first_name" class="block text-sm font-medium text-gray-700">First Name</label>
+                <input
+                  type="text"
+                  id="loan_first_name"
+                  name="loan[first_name]"
+                  value={@loan.first_name}
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+              
+              <div>
+                <label for="loan_last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                <input
+                  type="text"
+                  id="loan_last_name"
+                  name="loan[last_name]"
+                  value={@loan.last_name}
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+              
+              <div>
+                <label for="loan_phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                <input
+                  type="tel"
+                  id="loan_phone"
+                  name="loan[phone]"
+                  value={@loan.phone}
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+              
+              <div>
+                <label for="loan_email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                <input
+                  type="email"
+                  id="loan_email"
+                  name="loan[email]"
+                  value={@loan.email}
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+              
+              <div>
+                <label for="loan_nrc" class="block text-sm font-medium text-gray-700">NRC Number</label>
+                <input
+                  type="text"
+                  id="loan_nrc"
+                  name="loan[nrc]"
+                  value={@loan.nrc}
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Location Information -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Location Information</h3>
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+              <div>
+                <label for="loan_province" class="block text-sm font-medium text-gray-700">Province</label>
+                <select
+                  id="loan_province"
+                  name="loan[province]"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                >
+                  <option value="">Select Province</option>
+                  <option value="Central" selected={@loan.province == "Central"}>Central</option>
+                  <option value="Copperbelt" selected={@loan.province == "Copperbelt"}>Copperbelt</option>
+                  <option value="Eastern" selected={@loan.province == "Eastern"}>Eastern</option>
+                  <option value="Luapula" selected={@loan.province == "Luapula"}>Luapula</option>
+                  <option value="Lusaka" selected={@loan.province == "Lusaka"}>Lusaka</option>
+                  <option value="Muchinga" selected={@loan.province == "Muchinga"}>Muchinga</option>
+                  <option value="Northern" selected={@loan.province == "Northern"}>Northern</option>
+                  <option value="North-Western" selected={@loan.province == "North-Western"}>North-Western</option>
+                  <option value="Southern" selected={@loan.province == "Southern"}>Southern</option>
+                  <option value="Western" selected={@loan.province == "Western"}>Western</option>
+                </select>
+              </div>
+              
+              <div>
+                <label for="loan_district" class="block text-sm font-medium text-gray-700">District</label>
+                <input
+                  type="text"
+                  id="loan_district"
+                  name="loan[district]"
+                  value={@loan.district}
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+              
+              <div>
+                <label for="loan_constituency" class="block text-sm font-medium text-gray-700">Constituency</label>
+                <input
+                  type="text"
+                  id="loan_constituency"
+                  name="loan[constituency]"
+                  value={@loan.constituency}
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Business Information -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Business Information</h3>
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label for="loan_business_name" class="block text-sm font-medium text-gray-700">Business Name</label>
+                <input
+                  type="text"
+                  id="loan_business_name"
+                  name="loan[business_name]"
+                  value={@loan.business_name}
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+              
+              <div>
+                <label for="loan_business_type" class="block text-sm font-medium text-gray-700">Business Type</label>
+                <select
+                  id="loan_business_type"
+                  name="loan[business_type]"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                >
+                  <option value="">Select Business Type</option>
+                  <option value="Retail" selected={@loan.business_type == "Retail"}>Retail</option>
+                  <option value="Agriculture" selected={@loan.business_type == "Agriculture"}>Agriculture</option>
+                  <option value="Manufacturing" selected={@loan.business_type == "Manufacturing"}>Manufacturing</option>
+                  <option value="Services" selected={@loan.business_type == "Services"}>Services</option>
+                  <option value="Food & Beverage" selected={@loan.business_type == "Food & Beverage"}>Food & Beverage</option>
+                  <option value="Other" selected={@loan.business_type == "Other"}>Other</option>
+                </select>
+              </div>
+              
+              <div>
+                <label for="loan_years_in_business" class="block text-sm font-medium text-gray-700">Years in Business</label>
+                <input
+                  type="number"
+                  id="loan_years_in_business"
+                  name="loan[years_in_business]"
+                  value={@loan.years_in_business}
+                  min="0"
+                  max="50"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Loan Details -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Loan Details</h3>
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label for="loan_amount" class="block text-sm font-medium text-gray-700">Loan Amount (ZMW)</label>
+                <input
+                  type="number"
+                  id="loan_amount"
+                  name="loan[amount]"
+                  value={Decimal.to_string(@loan.amount, :normal)}
+                  min="1000"
+                  step="100"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+              
+              <div>
+                <label for="loan_loan_type" class="block text-sm font-medium text-gray-700">Loan Type</label>
+                <select
+                  id="loan_loan_type"
+                  name="loan[loan_type]"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                >
+                  <option value="">Select Loan Type</option>
+                  <option value="Microfinance" selected={@loan.loan_type == "Microfinance"}>Microfinance</option>
+                  <option value="Agricultural" selected={@loan.loan_type == "Agricultural"}>Agricultural</option>
+                  <option value="SME Loan" selected={@loan.loan_type == "SME Loan"}>SME Loan</option>
+                  <option value="Equipment" selected={@loan.loan_type == "Equipment"}>Equipment</option>
+                  <option value="Working Capital" selected={@loan.loan_type == "Working Capital"}>Working Capital</option>
+                  <option value="Housing" selected={@loan.loan_type == "Housing"}>Housing</option>
+                  <option value="Education" selected={@loan.loan_type == "Education"}>Education</option>
+                  <option value="Health" selected={@loan.loan_type == "Health"}>Health</option>
+                </select>
+              </div>
+              
+              <div class="sm:col-span-2">
+                <label for="loan_purpose" class="block text-sm font-medium text-gray-700">Purpose of Loan</label>
+                <textarea
+                  id="loan_purpose"
+                  name="loan[purpose]"
+                  rows="4"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  placeholder="Describe how the funds will be used..."
+                ><%= @loan.purpose %></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Administrative Fields -->
+          <%= if @loan.created_by || @loan.loan_id do %>
+            <div>
+              <h3 class="text-lg font-medium text-gray-900 mb-4">Administrative Information</h3>
+              <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <%= if @loan.loan_id do %>
+                  <div>
+                    <label for="loan_loan_id" class="block text-sm font-medium text-gray-700">Loan ID</label>
+                    <input
+                      type="text"
+                      id="loan_loan_id"
+                      name="loan[loan_id]"
+                      value={@loan.loan_id}
+                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                <% end %>
+                
+                <%= if @loan.created_by do %>
+                  <div>
+                    <label for="loan_created_by" class="block text-sm font-medium text-gray-700">Created By</label>
+                    <input
+                      type="text"
+                      id="loan_created_by"
+                      name="loan[created_by]"
+                      value={@loan.created_by}
+                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                <% end %>
+                
+                <%= if @loan.interest_rate do %>
+                  <div>
+                    <label for="loan_interest_rate" class="block text-sm font-medium text-gray-700">Interest Rate (%)</label>
+                    <input
+                      type="number"
+                      id="loan_interest_rate"
+                      name="loan[interest_rate]"
+                      value={@loan.interest_rate && Decimal.to_string(@loan.interest_rate, :normal)}
+                      min="0"
+                      step="0.1"
+                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                <% end %>
+                
+                <%= if @loan.maturity_date do %>
+                  <div>
+                    <label for="loan_maturity_date" class="block text-sm font-medium text-gray-700">Maturity Date</label>
+                    <input
+                      type="date"
+                      id="loan_maturity_date"
+                      name="loan[maturity_date]"
+                      value={@loan.maturity_date}
+                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+          <.link href={~p"/admin/loan-applications/#{@loan.id}"} class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Cancel
+          </.link>
+          
+          <button
+            type="submit"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

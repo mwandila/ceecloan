@@ -1,0 +1,103 @@
+<div class="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-sm">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Create New Survey</h1>
+    <p class="text-gray-600 mt-1">Build a comprehensive survey to gather feedback and insights.</p>
+  </div>
+
+  <.simple_form :let={f} for={@changeset} action={@action}>
+    <.error :if={@changeset.action}>
+      Oops, something went wrong! Please check the errors below.
+    </.error>
+    
+    <div class="space-y-8">
+      <!-- Basic Information -->
+      <div class="bg-gray-50 p-6 rounded-lg border">
+        <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+          <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Basic Information
+        </h3>
+        <div class="grid grid-cols-1 gap-6">
+          <.input field={f[:title]} type="text" label="Survey Title" required class="w-full" />
+          <.input field={f[:description]} type="textarea" label="Description" required rows="4" class="w-full" />
+        </div>
+      </div>
+
+      <!-- Survey Settings -->
+      <div class="bg-gray-50 p-6 rounded-lg border">
+        <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+          <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+          Survey Settings
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <.input 
+            field={f[:status]} 
+            type="select" 
+            label="Status"
+            options={[
+              {"Draft", "draft"}, 
+              {"Active", "active"}, 
+              {"Completed", "completed"}, 
+              {"Archived", "archived"}
+            ]}
+            required 
+          />
+          <.input field={f[:created_by]} type="text" label="Created By" required />
+        </div>
+      </div>
+
+      <!-- Date Settings -->
+      <div class="bg-gray-50 p-6 rounded-lg border">
+        <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+          <svg class="w-5 h-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          Date Settings
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <.input field={f[:start_date]} type="date" label="Start Date" />
+          <.input field={f[:end_date]} type="date" label="End Date" />
+        </div>
+        <p class="text-sm text-gray-500 mt-4 p-3 bg-blue-50 rounded-md border-l-4 border-blue-400">
+          <svg class="w-4 h-4 text-blue-600 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          Set the date range when this survey will be active and available for responses.
+        </p>
+      </div>
+    </div>
+    
+    <:actions>
+      <div class="flex items-center justify-between pt-8 mt-8 border-t border-gray-200">
+        <div class="text-sm text-gray-500 flex items-center">
+          <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <%= if @changeset.data.updated_at do %>
+            <span>Last updated: <%= Calendar.strftime(@changeset.data.updated_at, "%b %d, %Y at %I:%M %p") %></span>
+          <% else %>
+            <span>New survey</span>
+          <% end %>
+        </div>
+        <div class="flex space-x-4">
+          <.link navigate={~p"/surveys"} class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-all duration-200 border border-gray-300 hover:border-gray-400">
+            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Cancel
+          </.link>
+          <.button class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl">
+            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            Save Survey
+          </.button>
+        </div>
+      </div>
+    </:actions>
+  </.simple_form>
+</div>
