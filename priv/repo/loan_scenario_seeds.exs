@@ -119,7 +119,7 @@ IO.puts("💳 Creating existing active loans...")
   amount: Decimal.new("150000"),
   interest_rate: Decimal.new("8.5"),
   maturity_date: ~D[2026-01-15],
-  status: "Active",
+  status: "active",
   created_by: "Loan Officer",
   disbursed_at: ~U[2024-06-15 10:00:00Z]
 })

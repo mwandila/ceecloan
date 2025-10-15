@@ -51,9 +51,29 @@ defmodule Ceec.Finance.Loan do
     |> foreign_key_constraint(:borrower_id)
   end
   
+  @doc """
+  Changeset for status updates (approval, rejection, disbursement)
+  """
+  def status_changeset(loan, attrs) do
+    loan
+    |> cast(attrs, [:status, :rejection_reason, :disbursed_at])
+    |> validate_inclusion(:status, ["pending", "approved", "rejected", "disbursed"])
+  end
+  
   # Different validation requirements based on loan source
   defp validate_required_for_type(changeset, attrs) do
     cond do
+      # Status-only update (approval, rejection, disbursement)
+      attrs == %{status: "approved"} || attrs == %{"status" => "approved"} ||
+      attrs == %{status: "rejected"} || attrs == %{"status" => "rejected"} ||
+      attrs == %{status: "disbursed"} || attrs == %{"status" => "disbursed"} ||
+      (Map.keys(attrs) |> Enum.sort()) == ["status"] ||
+      (Map.keys(attrs) |> Enum.sort()) == [:status] ||
+      Map.has_key?(attrs, "rejection_reason") || Map.has_key?(attrs, :rejection_reason) ||
+      Map.has_key?(attrs, "disbursed_at") || Map.has_key?(attrs, :disbursed_at) ->
+        # No additional validation for status updates
+        changeset
+        
       # Public loan application (has first_name or business_name)
       Map.has_key?(attrs, "first_name") || Map.has_key?(attrs, "business_name") ||
       Map.has_key?(attrs, :first_name) || Map.has_key?(attrs, :business_name) ->
@@ -62,9 +82,13 @@ defmodule Ceec.Finance.Loan do
         |> put_change(:status, "pending")
         |> put_applicant_name()
         
-      # Administrative loan (has created_by)
-      true ->
+      # Administrative loan creation (has created_by)
+      Map.has_key?(attrs, "created_by") || Map.has_key?(attrs, :created_by) ->
         validate_required(changeset, [:loan_id, :amount, :interest_rate, :maturity_date, :status, :created_by, :loan_type])
+        
+      # Default: no additional validation for other updates
+      true ->
+        changeset
     end
   end
   

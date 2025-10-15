@@ -58,7 +58,7 @@ defmodule CeecWeb.AdminLoanController do
   def approve(conn, %{"id" => id}) do
     loan = Finance.get_loan!(id) |> Ceec.Repo.preload(:project)
     
-    case Finance.update_loan(loan, %{status: "approved"}) do
+    case Finance.update_loan_status(loan, %{status: "approved"}) do
       {:ok, _loan} ->
         conn
         |> put_flash(:info, "Loan application approved successfully!")
@@ -74,7 +74,7 @@ defmodule CeecWeb.AdminLoanController do
   def reject(conn, %{"id" => id, "admin_loan" => %{"rejection_reason" => reason}}) do
     loan = Finance.get_loan!(id) |> Ceec.Repo.preload(:project)
     
-    case Finance.update_loan(loan, %{status: "rejected", rejection_reason: reason}) do
+    case Finance.update_loan_status(loan, %{status: "rejected", rejection_reason: reason}) do
       {:ok, _loan} ->
         conn
         |> put_flash(:info, "Loan application rejected.")
@@ -98,7 +98,7 @@ defmodule CeecWeb.AdminLoanController do
     loan = Finance.get_loan!(id) |> Ceec.Repo.preload(:project)
     
     if loan.status == "approved" do
-      case Finance.update_loan(loan, %{status: "disbursed", disbursed_at: DateTime.utc_now()}) do
+      case Finance.update_loan_status(loan, %{status: "disbursed", disbursed_at: DateTime.utc_now()}) do
         {:ok, _loan} ->
           conn
           |> put_flash(:info, "Loan funds marked as disbursed!")

@@ -133,6 +133,15 @@ defmodule Ceec.Finance do
   end
   
   @doc """
+  Updates loan status (for approval, rejection, disbursement)
+  """
+  def update_loan_status(%Loan{} = loan, attrs) do
+    loan
+    |> Loan.status_changeset(attrs)
+    |> Repo.update()
+  end
+  
+  @doc """
   Returns loans associated with a specific project.
   """
   def list_loans_for_project(project_id) do
