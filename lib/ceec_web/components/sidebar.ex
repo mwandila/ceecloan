@@ -60,7 +60,7 @@ defmodule CeecWeb.Components.Sidebar do
 
           <!-- Surveys -->
           <.nav_link 
-            href="/surveys" 
+            href="/admin/surveys" 
             active={@current_page == "surveys"} 
             icon="clipboard"
             label="Surveys"
