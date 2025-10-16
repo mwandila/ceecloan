@@ -369,17 +369,24 @@ defmodule CeecWeb.SurveyLive.Take do
 
       if Enum.empty?(missing_answers) do
         # All required questions answered - submit survey
+        require Logger
+        Logger.info("Attempting to submit survey response ID: #{socket.assigns.survey_response.id}")
+        
         case Surveys.submit_survey_response(socket.assigns.survey_response) do
-          {:ok, _} ->
+          {:ok, updated_response} ->
+            Logger.info("Successfully submitted survey response: #{inspect(updated_response)}")
             socket =
               socket
               |> put_flash(:info, "Thank you! Your survey has been submitted successfully.")
               |> assign(:is_completed, true)
-              |> push_navigate(to: ~p"/surveys/#{socket.assigns.survey.id}/completed")
+              |> assign(:survey_response, updated_response)
+              # Use a simpler redirect for now
+              |> push_navigate(to: ~p"/surveys")
 
             {:noreply, socket}
 
-          {:error, _} ->
+          {:error, changeset} ->
+            Logger.error("Failed to submit survey response: #{inspect(changeset)}")
             socket =
               socket
               # Reset submission state on error

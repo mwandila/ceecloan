@@ -431,8 +431,10 @@ defmodule Ceec.Surveys do
   Submits a survey response (marks it as completed).
   """
   def submit_survey_response(%SurveyResponse{} = survey_response) do
+    # Use minimal_changeset to avoid validation issues with dynamic surveys
+    # that don't have all the legacy required fields filled
     survey_response
-    |> SurveyResponse.changeset(%{
+    |> SurveyResponse.minimal_changeset(%{
       completion_status: "completed",
       submitted_at: DateTime.utc_now()
     })
