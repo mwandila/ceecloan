@@ -207,42 +207,90 @@
                 <%= for response <- @survey_responses do %>
                   <tr class="hover:bg-gray-50">
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm font-medium text-gray-900">
-                        <%= response.beneficiary_name || "—" %>
-                      </div>
+                      <%= if response.beneficiary_name do %>
+                        <div class="text-sm font-medium text-gray-900">
+                          <%= response.beneficiary_name %>
+                        </div>
+                      <% else %>
+                        <!-- Show first few survey answers if no beneficiary name -->
+                        <%= for {question_response, index} <- Enum.with_index(Enum.take(response.question_responses, 2)) do %>
+                          <div class="text-sm text-gray-900 mb-1">
+                            <span class="font-medium"><%= String.slice(question_response.question.question_text, 0, 30) %>:</span>
+                            <span class="text-gray-600"><%= String.slice(Ceec.Surveys.QuestionResponse.format_response(question_response), 0, 50) %></span>
+                          </div>
+                        <% end %>
+                      <% end %>
                       <div class="text-sm text-gray-500">
                         ID: <%= String.slice(to_string(response.id), 0, 8) %>...
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm text-gray-900">
-                        <span class={[
-                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-                          response.visit_type == "monitoring" && "bg-blue-100 text-blue-800" || "bg-green-100 text-green-800"
-                        ]}>
-                          <%= String.capitalize(response.visit_type || "Unknown") %>
-                        </span>
-                      </div>
-                      <div class="text-sm text-gray-500">
-                        <%= response.visit_date && Calendar.strftime(response.visit_date, "%b %d, %Y") || "—" %>
-                      </div>
-                      <div class="text-sm text-gray-500">
-                        by <%= response.interviewer_name || "—" %>
-                      </div>
+                      <%= if response.visit_type do %>
+                        <div class="text-sm text-gray-900">
+                          <span class={[
+                            "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                            response.visit_type == "monitoring" && "bg-blue-100 text-blue-800" || "bg-green-100 text-green-800"
+                          ]}>
+                            <%= String.capitalize(response.visit_type) %>
+                          </span>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                          <%= response.visit_date && Calendar.strftime(response.visit_date, "%b %d, %Y") || "—" %>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                          by <%= response.interviewer_name || "—" %>
+                        </div>
+                      <% else %>
+                        <div class="text-sm text-gray-900">
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            Dynamic Survey
+                          </span>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                          <%= Calendar.strftime(response.inserted_at, "%b %d, %Y") %>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                          <%= length(response.question_responses) %> answers
+                        </div>
+                      <% end %>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div><%= response.province || "—" %></div>
-                      <div class="text-gray-500"><%= response.district || "—" %></div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div><%= response.business_type && String.capitalize(response.business_type) || "—" %></div>
-                      <div class="text-gray-500">
-                        <%= if response.loan_amount do %>
-                          ZMW <%= :erlang.float_to_binary(Decimal.to_float(response.loan_amount), [decimals: 0]) %>
-                        <% else %>
-                          —
+                      <%= if response.province do %>
+                        <div><%= response.province %></div>
+                        <div class="text-gray-500"><%= response.district || "—" %></div>
+                      <% else %>
+                        <!-- Show location-related answers if available -->
+                        <%= for question_response <- Enum.filter(response.question_responses, fn qr -> String.contains?(String.downcase(qr.question.question_text), "location") or String.contains?(String.downcase(qr.question.question_text), "province") or String.contains?(String.downcase(qr.question.question_text), "district") end) |> Enum.take(2) do %>
+                          <div class="text-sm">
+                            <%= Ceec.Surveys.QuestionResponse.format_response(question_response) %>
+                          </div>
                         <% end %>
-                      </div>
+                        <%= if Enum.empty?(Enum.filter(response.question_responses, fn qr -> String.contains?(String.downcase(qr.question.question_text), "location") end)) do %>
+                          <span class="text-gray-500">—</span>
+                        <% end %>
+                      <% end %>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <%= if response.business_type do %>
+                        <div><%= String.capitalize(response.business_type) %></div>
+                        <div class="text-gray-500">
+                          <%= if response.loan_amount do %>
+                            ZMW <%= :erlang.float_to_binary(Decimal.to_float(response.loan_amount), [decimals: 0]) %>
+                          <% else %>
+                            —
+                          <% end %>
+                        </div>
+                      <% else %>
+                        <!-- Show business-related answers -->
+                        <%= for question_response <- Enum.filter(response.question_responses, fn qr -> String.contains?(String.downcase(qr.question.question_text), "business") or String.contains?(String.downcase(qr.question.question_text), "loan") end) |> Enum.take(2) do %>
+                          <div class="text-sm truncate max-w-32">
+                            <%= Ceec.Surveys.QuestionResponse.format_response(question_response) %>
+                          </div>
+                        <% end %>
+                        <%= if Enum.empty?(Enum.filter(response.question_responses, fn qr -> String.contains?(String.downcase(qr.question.question_text), "business") end)) do %>
+                          <span class="text-gray-500">—</span>
+                        <% end %>
+                      <% end %>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <%= if response.project_rating do %>
@@ -258,15 +306,23 @@
                           <span class="ml-1 text-xs text-gray-500">(<%= response.project_rating %>)</span>
                         </div>
                       <% else %>
-                        <span class="text-gray-500">—</span>
+                        <!-- Show rating answers from survey -->
+                        <%= for question_response <- Enum.filter(response.question_responses, fn qr -> qr.question.question_type == "rating" end) |> Enum.take(1) do %>
+                          <div class="text-sm">
+                            <%= Ceec.Surveys.QuestionResponse.format_response(question_response) %>
+                          </div>
+                        <% end %>
+                        <%= if Enum.empty?(Enum.filter(response.question_responses, fn qr -> qr.question.question_type == "rating" end)) do %>
+                          <span class="text-gray-500">—</span>
+                        <% end %>
                       <% end %>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div class="max-w-xs truncate" title={response.survey_title}>
-                        <%= response.survey_title %>
+                      <div class="max-w-xs truncate" title={response.survey.title}>
+                        <%= response.survey.title %>
                       </div>
                       <div class="text-gray-500">
-                        <%= Calendar.strftime(response.submitted_at, "%b %d, %Y %I:%M %p") %>
+                        <%= Calendar.strftime(response.inserted_at, "%b %d, %Y %I:%M %p") %>
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

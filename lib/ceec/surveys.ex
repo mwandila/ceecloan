@@ -205,21 +205,10 @@ defmodule Ceec.Surveys do
   def list_survey_responses_with_filters(filters \\ %{}) do
     from(r in SurveyResponse,
       join: s in Survey, on: r.survey_id == s.id,
-      select: %{
-        id: r.id,
-        beneficiary_name: r.beneficiary_name,
-        visit_type: r.visit_type,
-        visit_date: r.visit_date,
-        interviewer_name: r.interviewer_name,
-        province: r.province,
-        district: r.district,
-        business_type: r.business_type,
-        loan_amount: r.loan_amount,
-        project_rating: r.project_rating,
-        survey_title: s.title,
-        survey_id: r.survey_id,
-        submitted_at: r.inserted_at
-      },
+      preload: [
+        question_responses: [question: []],
+        survey: []
+      ],
       order_by: [desc: r.inserted_at]
     )
     |> apply_filters(filters)
@@ -241,14 +230,14 @@ defmodule Ceec.Surveys do
       {"date_from", ""}, query -> query
       {"date_from", date_from}, query ->
         case Date.from_iso8601(date_from) do
-          {:ok, date} -> from(r in query, where: r.visit_date >= ^date)
+          {:ok, date} -> from(r in query, where: r.visit_date >= ^date or r.inserted_at >= ^DateTime.new!(date, ~T[00:00:00]))
           _ -> query
         end
       
       {"date_to", ""}, query -> query  
       {"date_to", date_to}, query ->
         case Date.from_iso8601(date_to) do
-          {:ok, date} -> from(r in query, where: r.visit_date <= ^date)
+          {:ok, date} -> from(r in query, where: r.visit_date <= ^date or r.inserted_at <= ^DateTime.new!(date, ~T[23:59:59]))
           _ -> query
         end
       
