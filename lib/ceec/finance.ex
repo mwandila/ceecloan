@@ -55,6 +55,34 @@ defmodule Ceec.Finance do
   def get_loan(id), do: Repo.get(Loan, id)
 
   @doc """
+  Gets a single loan by application ID.
+
+  Returns `nil` if the Loan does not exist.
+
+  ## Examples
+
+      iex> get_loan_by_application_id("CEEC-2024-001")
+      %Loan{}
+
+      iex> get_loan_by_application_id("INVALID-ID")
+      nil
+
+  """
+  def get_loan_by_application_id(application_id) do
+    # Convert application_id string to integer for database lookup
+    case Integer.parse(application_id) do
+      {id, ""} ->
+        from(l in Loan,
+          where: l.id == ^id,
+          preload: [:borrower, :project]
+        )
+        |> Repo.one()
+      _ ->
+        nil
+    end
+  end
+
+  @doc """
   Creates a loan.
 
   ## Examples

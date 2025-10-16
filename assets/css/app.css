@@ -127,3 +127,56 @@
 .auth-input:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
+
+/* Survey Builder Specific Styles */
+.survey-builder {
+  @apply min-h-screen bg-gray-50;
+}
+
+.survey-header {
+  @apply bg-blue-600 shadow-sm;
+}
+
+.survey-logo {
+  @apply bg-white text-blue-600 rounded-lg px-3 py-1 font-bold text-lg;
+}
+
+.question-type-card {
+  @apply flex items-center p-3 rounded-lg cursor-pointer border border-transparent transition-colors;
+}
+
+.question-type-card:hover {
+  @apply bg-blue-50 border-blue-200;
+}
+
+.question-type-card.selected {
+  @apply bg-blue-50 border-blue-200;
+}
+
+.question-card {
+  @apply border border-gray-200 rounded-lg p-4 bg-white transition-shadow;
+}
+
+.question-card:hover {
+  @apply shadow-sm;
+}
+
+.question-option {
+  @apply flex items-center gap-3;
+}
+
+.question-option input {
+  @apply flex-1 bg-gray-100 border border-gray-300 rounded-md px-3 py-2 text-sm;
+}
+
+.question-option input:focus {
+  @apply ring-2 ring-blue-500 border-blue-500;
+}
+
+.drag-handle {
+  @apply text-gray-400 cursor-grab;
+}
+
+.drag-handle:active {
+  @apply cursor-grabbing;
+}

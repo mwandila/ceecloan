@@ -1,0 +1,243 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <div class="bg-blue-600 shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center text-white">
+          <div class="bg-white text-blue-600 rounded-lg px-3 py-1 mr-4 font-bold text-lg">
+            CEEC
+          </div>
+          <div class="text-white font-medium">
+            SURVEY RESPONSE
+          </div>
+        </div>
+        <div class="text-white">
+          <%= if @loan && @loan.project do %>
+            <div class="text-sm opacity-90"><%= @loan.project.name %></div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <%= if @completed do %>
+      <!-- Completion Screen -->
+      <div class="bg-white rounded-lg shadow-sm border p-8 text-center">
+        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Survey Completed</h2>
+        <p class="text-gray-600 mb-6">Thank you for taking the time to complete this survey. Your feedback is valuable to us.</p>
+        <div class="text-sm text-gray-500">
+          Completed on <%= Date.utc_today() |> Calendar.strftime("%B %d, %Y") %>
+        </div>
+      </div>
+    <% else %>
+      <!-- Survey Form -->
+      <div class="bg-white rounded-lg shadow-sm border">
+        <!-- Survey Header -->
+        <div class="p-6 border-b">
+          <h1 class="text-2xl font-bold text-gray-900 mb-2"><%= @survey.title %></h1>
+          <p class="text-gray-600 mb-4"><%= @survey.description %></p>
+          
+          <!-- Progress Bar -->
+          <div class="flex items-center justify-between text-sm text-gray-500 mb-2">
+            <span>Question <%= @current_question_index + 1 %> of <%= length(@questions) %></span>
+            <span><%= progress_percentage(@current_question_index, length(@questions)) %>% Complete</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+              style={"width: #{progress_percentage(@current_question_index, length(@questions))}%"}
+            ></div>
+          </div>
+        </div>
+
+        <!-- Current Question -->
+        <%= if get_current_question(@questions, @current_question_index) do %>
+          <% current_question = get_current_question(@questions, @current_question_index) %>
+          <div class="p-6">
+            <div class="mb-6">
+              <h2 class="text-xl font-medium text-gray-900 mb-4">
+                <%= current_question.question_text %>
+                <%= if current_question.required do %>
+                  <span class="text-red-500 ml-1">*</span>
+                <% end %>
+              </h2>
+              
+              <!-- Question Input Based on Type -->
+              <%= case current_question.question_type do %>
+                <% "text" -> %>
+                  <input 
+                    type="text"
+                    name="answer"
+                    value={Map.get(@answers, @current_question_index, "")}
+                    phx-blur="answer_question"
+                    phx-value-question_index={@current_question_index}
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Type your answer here..."
+                  />
+                
+                <% "textarea" -> %>
+                  <textarea 
+                    name="answer"
+                    rows="4"
+                    phx-blur="answer_question"
+                    phx-value-question_index={@current_question_index}
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Type your answer here..."
+                  ><%= Map.get(@answers, @current_question_index, "") %></textarea>
+                
+                <% "radio" -> %>
+                  <div class="space-y-3">
+                    <%= for {option, option_index} <- Enum.with_index(current_question.options || []) do %>
+                      <label class="flex items-center cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors">
+                        <input 
+                          type="radio"
+                          name={:"question_#{@current_question_index}"}
+                          value={option}
+                          checked={Map.get(@answers, @current_question_index) == option}
+                          phx-click="answer_question"
+                          phx-value-question_index={@current_question_index}
+                          phx-value-answer={option}
+                          class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                        />
+                        <span class="ml-3 text-gray-700"><%= option %></span>
+                      </label>
+                    <% end %>
+                  </div>
+                
+                <% "checkbox" -> %>
+                  <div class="space-y-3">
+                    <.form for={%{}} as={:checkbox_form} phx-change="answer_multiple" phx-value-question_index={@current_question_index}>
+                      <%= for {option, option_index} <- Enum.with_index(current_question.options || []) do %>
+                        <label class="flex items-center cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors">
+                          <input 
+                            type="checkbox"
+                            name={"option_#{option}"}
+                            value="on"
+                            checked={option in (Map.get(@answers, @current_question_index, []) || [])}
+                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <span class="ml-3 text-gray-700"><%= option %></span>
+                        </label>
+                      <% end %>
+                    </.form>
+                  </div>
+                
+                <% "select" -> %>
+                  <select 
+                    name="answer"
+                    phx-change="answer_question"
+                    phx-value-question_index={@current_question_index}
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select an option...</option>
+                    <%= for option <- (current_question.options || []) do %>
+                      <option 
+                        value={option} 
+                        selected={Map.get(@answers, @current_question_index) == option}
+                      >
+                        <%= option %>
+                      </option>
+                    <% end %>
+                  </select>
+                
+                <% "rating" -> %>
+                  <div class="flex items-center space-x-4">
+                    <%= for rating <- 1..5 do %>
+                      <button 
+                        type="button"
+                        phx-click="answer_question"
+                        phx-value-question_index={@current_question_index}
+                        phx-value-answer={rating}
+                        class={[
+                          "w-12 h-12 rounded-full border-2 transition-all font-medium",
+                          if(Map.get(@answers, @current_question_index) == to_string(rating), 
+                             do: "bg-blue-600 border-blue-600 text-white", 
+                             else: "border-gray-300 text-gray-700 hover:border-blue-300")
+                        ]}
+                      >
+                        <%= rating %>
+                      </button>
+                    <% end %>
+                  </div>
+                  <div class="flex justify-between text-sm text-gray-500 mt-2">
+                    <span>Poor</span>
+                    <span>Excellent</span>
+                  </div>
+                
+                <% _ -> %>
+                  <input 
+                    type="text"
+                    name="answer"
+                    value={Map.get(@answers, @current_question_index, "")}
+                    phx-blur="answer_question"
+                    phx-value-question_index={@current_question_index}
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Type your answer here..."
+                  />
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Navigation -->
+        <div class="border-t px-6 py-4">
+          <div class="flex items-center justify-between">
+            <button 
+              phx-click="prev_question"
+              disabled={@current_question_index == 0}
+              class={[
+                "px-4 py-2 rounded-lg font-medium transition-colors",
+                if(@current_question_index == 0, 
+                   do: "bg-gray-100 text-gray-400 cursor-not-allowed",
+                   else: "bg-gray-200 text-gray-700 hover:bg-gray-300")
+              ]}
+            >
+              Previous
+            </button>
+            
+            <div class="flex items-center space-x-2">
+              <%= for {_question, index} <- Enum.with_index(@questions) do %>
+                <button 
+                  phx-click="go_to_question"
+                  phx-value-index={index}
+                  class={[
+                    "w-3 h-3 rounded-full transition-colors",
+                    cond do
+                      index == @current_question_index -> "bg-blue-600"
+                      question_completed?(@answers, index) -> "bg-green-400"
+                      true -> "bg-gray-200"
+                    end
+                  ]}
+                  title={"Question #{index + 1}"}
+                >
+                </button>
+              <% end %>
+            </div>
+            
+            <%= if @current_question_index == length(@questions) - 1 do %>
+              <button 
+                phx-click="submit_survey"
+                class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              >
+                Submit Survey
+              </button>
+            <% else %>
+              <button 
+                phx-click="next_question"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Next
+              </button>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

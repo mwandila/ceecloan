@@ -47,6 +47,11 @@
                         <p class="text-sm font-medium text-indigo-600 truncate">
                           <%= survey.title %>
                         </p>
+                        <%= if DateTime.diff(DateTime.utc_now(), DateTime.from_naive!(survey.inserted_at, "Etc/UTC"), :minute) < 30 do %>
+                          <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            🆕 NEW
+                          </span>
+                        <% end %>
                         <span class={[
                           "ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
                           survey.status == "active" && "bg-green-100 text-green-800",

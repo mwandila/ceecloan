@@ -122,15 +122,10 @@
             </p>
           </div>
           <div class="mt-6">
-            <%= if assigns[:available_surveys] && length(@available_surveys) > 0 do %>
-              <a href={~p"/surveys/#{hd(@available_surveys)}/take"} class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors duration-200">
-                Take Survey
-              </a>
-            <% else %>
-              <a href="/contact" class="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
-                Contact Us
-              </a>
-            <% end %>
+            <a href="/surveys" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors duration-200">
+              Find My Surveys
+            </a>
+            <!-- Simplified: Always show surveys link instead of conditional logic -->
           </div>
         </div>
       </div>

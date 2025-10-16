@@ -18,7 +18,7 @@ defmodule CeecWeb.SurveyLive.Builder do
         id: nil,
         title: "",
         description: "",
-        status: "draft",
+        status: "active",
         created_by: get_user_name_from_session(socket)
       }
       {survey, []}
@@ -84,7 +84,7 @@ defmodule CeecWeb.SurveyLive.Builder do
           
         {:noreply, push_navigate(socket, to: ~p"/surveys/#{survey.id}/builder")}
         
-      {:error, changeset} ->
+      {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to create survey template")}
     end
   end
@@ -95,11 +95,20 @@ defmodule CeecWeb.SurveyLive.Builder do
     # Ensure survey exists first
     survey = ensure_survey_exists(socket)
     
+    # Set default options for different question types
+    default_options = case question_type do
+      "radio" -> %{"choices" => ["18-24", "25-34", "35-44"]}
+      "checkbox" -> %{"choices" => ["Option 1", "Option 2", "Option 3"]}
+      "select" -> %{"choices" => ["Option 1", "Option 2", "Option 3"]}
+      "rating" -> %{"max_value" => 5}
+      _ -> nil
+    end
+    
     new_question = %{
       survey_id: survey.id,
-      question_text: "New #{format_question_type(question_type)} Question",
+      question_text: get_default_question_text(question_type),
       question_type: question_type,
-      options: if(question_type in ["select", "radio", "checkbox"], do: [], else: nil),
+      options: default_options,
       required: false,
       order_index: length(socket.assigns.questions)
     }
@@ -151,12 +160,12 @@ defmodule CeecWeb.SurveyLive.Builder do
     value = case {params["value"], field} do
       {"on", "required"} -> true  # checkbox on
       {nil, "required"} -> false # checkbox off
-      {val, "options"} when is_binary(val) -> String.split(val, "\n", trim: true)
+      {val, "options"} when is_binary(val) -> %{"choices" => String.split(val, "\n", trim: true)}
       {val, _} -> val
       _ -> 
         # Try to get value from target (form input)
         case params["target"] do
-          %{"value" => val} when field == "options" -> String.split(val, "\n", trim: true)
+          %{"value" => val} when field == "options" -> %{"choices" => String.split(val, "\n", trim: true)}
           %{"value" => val} -> val
           _ -> nil
         end
@@ -229,6 +238,48 @@ defmodule CeecWeb.SurveyLive.Builder do
     end
   end
   
+  # Handle saving and distributing survey
+  @impl true
+  def handle_event("save_and_distribute", _params, socket) do
+    survey = socket.assigns.survey
+    
+    case save_survey_and_questions(survey, socket.assigns.questions) do
+      {:ok, saved_survey} ->
+        # Distribute survey to project loan holders if project is selected
+        if saved_survey.project_id do
+          case Surveys.distribute_survey_to_project(saved_survey, saved_survey.project_id) do
+            {:ok, distribution_result} ->
+              message = "Survey saved and activated successfully! Available to #{distribution_result.total_sent} disbursed loan holders."
+              socket = 
+                socket
+                |> put_flash(:info, message)
+                |> assign(:survey, saved_survey)
+              
+              {:noreply, socket}
+            
+            {:error, reason} ->
+              message = "Survey saved but distribution failed: #{reason}"
+              socket = 
+                socket
+                |> put_flash(:warning, message)
+                |> assign(:survey, saved_survey)
+              
+              {:noreply, socket}
+          end
+        else
+          socket = 
+            socket
+            |> put_flash(:info, "Survey saved successfully! Select a project to distribute the survey.")
+            |> assign(:survey, saved_survey)
+          
+          {:noreply, socket}
+        end
+      
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to save survey")}
+    end
+  end
+  
   # Handle preview
   @impl true
   def handle_event("preview_survey", _params, socket) do
@@ -255,6 +306,120 @@ defmodule CeecWeb.SurveyLive.Builder do
     {:noreply, assign(socket, :preview_answers, updated_answers)}
   end
   
+  # Handle adding option to question
+  @impl true
+  def handle_event("add_option", %{"question_index" => question_index}, socket) do
+    index = String.to_integer(question_index)
+    questions = socket.assigns.questions
+    question = Enum.at(questions, index)
+    
+    if question do
+      current_choices = get_in(question.options, ["choices"]) || []
+      new_option = "Option #{length(current_choices) + 1}"
+      updated_choices = current_choices ++ [new_option]
+      updated_options = Map.put(question.options || %{}, "choices", updated_choices)
+      updated_question = Map.put(question, :options, updated_options)
+      updated_questions = List.replace_at(questions, index, updated_question)
+      
+      {:noreply, assign(socket, :questions, updated_questions)}
+    else
+      {:noreply, socket}
+    end
+  end
+  
+  # Handle updating option text
+  @impl true
+  def handle_event("update_option", params, socket) do
+    question_index = String.to_integer(params["question_index"])
+    option_index = String.to_integer(params["option_index"])
+    
+    # Get value from different possible sources
+    new_value = case params do
+      %{"value" => val} -> val
+      %{"target" => %{"value" => val}} -> val
+      _ -> nil
+    end
+    
+    if new_value do
+      questions = socket.assigns.questions
+      question = Enum.at(questions, question_index)
+      
+      if question && get_in(question.options, ["choices"]) do
+        current_choices = get_in(question.options, ["choices"])
+        updated_choices = List.replace_at(current_choices, option_index, new_value)
+        updated_options = Map.put(question.options, "choices", updated_choices)
+        updated_question = Map.put(question, :options, updated_options)
+        updated_questions = List.replace_at(questions, question_index, updated_question)
+        
+        {:noreply, assign(socket, :questions, updated_questions)}
+      else
+        {:noreply, socket}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
+  
+  # Handle removing option from question
+  @impl true
+  def handle_event("remove_option", params, socket) do
+    question_index = String.to_integer(params["question_index"])
+    option_index = String.to_integer(params["option_index"])
+    
+    questions = socket.assigns.questions
+    question = Enum.at(questions, question_index)
+    
+    current_choices = get_in(question.options, ["choices"]) || []
+    if question && length(current_choices) > 1 do
+      updated_choices = List.delete_at(current_choices, option_index)
+      updated_options = Map.put(question.options || %{}, "choices", updated_choices)
+      updated_question = Map.put(question, :options, updated_options)
+      updated_questions = List.replace_at(questions, question_index, updated_question)
+      
+      {:noreply, assign(socket, :questions, updated_questions)}
+    else
+      {:noreply, socket}
+    end
+  end
+  
+  # Handle adding option via Enter key
+  @impl true
+  def handle_event("add_option_on_enter", params, socket) do
+    question_index = String.to_integer(params["question_index"])
+    
+    # Get value from different possible sources
+    new_option = case params do
+      %{"value" => val} -> val
+      %{"target" => %{"value" => val}} -> val
+      _ -> nil
+    end
+    
+    if new_option && String.trim(new_option) != "" do
+      questions = socket.assigns.questions
+      question = Enum.at(questions, question_index)
+      
+      if question do
+        current_choices = get_in(question.options, ["choices"]) || []
+        updated_choices = current_choices ++ [String.trim(new_option)]
+        updated_options = Map.put(question.options || %{}, "choices", updated_choices)
+        updated_question = Map.put(question, :options, updated_options)
+        updated_questions = List.replace_at(questions, question_index, updated_question)
+        
+        # Clear the input field by sending a JS command
+        socket = 
+          socket
+          |> assign(:questions, updated_questions)
+          |> push_event("clear_input", %{id: "new-option-#{question_index}"})
+        
+        {:noreply, socket}
+      else
+        {:noreply, socket}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
+  
   # Handle project selection
   @impl true
   def handle_event("select_project", %{"project_id" => project_id}, socket) do
@@ -265,7 +430,7 @@ defmodule CeecWeb.SurveyLive.Builder do
     survey_attrs = %{
       title: "Survey for #{project.name}",
       description: "Assessment survey for #{project.name} project",
-      status: "draft",
+      status: "active",
       project_id: project_id,
       created_by: get_user_name_from_session(socket)
     }
@@ -414,7 +579,7 @@ defmodule CeecWeb.SurveyLive.Builder do
       case Surveys.create_survey(%{
         title: if(survey.title != "", do: survey.title, else: "New Survey"),
         description: survey.description || "",
-        status: survey.status || "draft",
+        status: survey.status || "active",
         created_by: survey.created_by || "Anonymous"
       }) do
         {:ok, created_survey} -> created_survey
@@ -442,13 +607,15 @@ defmodule CeecWeb.SurveyLive.Builder do
       Surveys.update_survey(survey, %{
         title: survey.title,
         description: survey.description,
-        status: survey.status
+        status: survey.status,
+        project_id: survey.project_id
       })
     else
       Surveys.create_survey(%{
         title: survey.title || "New Survey",
         description: survey.description || "",
-        status: survey.status || "draft",
+        status: survey.status || "active",
+        project_id: survey.project_id,
         created_by: survey.created_by || "Anonymous"
       })
     end
@@ -471,19 +638,14 @@ defmodule CeecWeb.SurveyLive.Builder do
     end)
   end
   
-  defp format_question_type(type) do
-    case type do
-      "text" -> "Short Text"
-      "textarea" -> "Long Text"
-      "select" -> "Dropdown"
-      "radio" -> "Multiple Choice"
-      "checkbox" -> "Checkboxes"
-      "rating" -> "Rating Scale"
-      "yes_no" -> "Yes/No"
-      "number" -> "Number"
-      "email" -> "Email"
-      "phone" -> "Phone"
-      _ -> String.capitalize(type)
+  defp get_default_question_text(question_type) do
+    case question_type do
+      "radio" -> "What is your age range?"
+      "checkbox" -> "Which of the following apply to you?"
+      "select" -> "Please select an option"
+      "text" -> "Enter your response"
+      "textarea" -> "Please provide details"
+      _ -> "New Question"
     end
   end
 end

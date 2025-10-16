@@ -11,7 +11,14 @@ defmodule CeecWeb.SurveyLive.Take do
   def mount(params, _session, socket) when is_map_key(params, "id") do
     survey_id = params["id"]
     loan_id = params["loan_id"]
-    mount_survey(survey_id, loan_id, socket)
+    
+    # If loan_id is provided (from direct link), mount the survey
+    # Otherwise, show application ID verification screen
+    if loan_id do
+      mount_survey(survey_id, loan_id, socket)
+    else
+      mount_verification_screen(survey_id, socket)
+    end
   end
   
   @impl true
@@ -25,8 +32,68 @@ defmodule CeecWeb.SurveyLive.Take do
     end
   end
   
+  defp mount_verification_screen(survey_id, socket) do
+    try do
+      survey = Surveys.get_survey!(survey_id)
+      
+      # Check if survey is available for taking
+      cond do
+        survey.status != "active" ->
+          socket = 
+            socket
+            |> put_flash(:error, "This survey is not currently available. Status: #{String.capitalize(survey.status)}")
+            |> redirect(to: "/")
+          {:ok, socket}
+          
+        true ->
+          socket = 
+            socket
+            |> assign(:survey, survey)
+            |> assign(:show_verification, true)
+            |> assign(:application_id, "")
+            |> assign(:verification_error, nil)
+            |> assign(:submitting, false)
+            |> assign(:page_title, survey.title)
+          
+          {:ok, socket}
+      end
+    rescue
+      Ecto.NoResultsError ->
+        socket = 
+          socket
+          |> put_flash(:error, "Survey not found. Please check the survey link and try again.")
+          |> redirect(to: "/")
+        {:ok, socket}
+    end
+  end
+  
   defp mount_survey(survey_id, loan_id, socket) do
-    survey = Surveys.get_survey_with_questions!(survey_id)
+    try do
+      survey = Surveys.get_survey_with_questions!(survey_id)
+      
+      # Check if survey is available for taking
+      cond do
+        survey.status != "active" ->
+          socket = 
+            socket
+            |> put_flash(:error, "This survey is not currently available. Status: #{String.capitalize(survey.status)}")
+            |> redirect(to: "/")
+          {:ok, socket}
+          
+        true ->
+          do_mount_survey(survey, loan_id, socket)
+      end
+    rescue
+      Ecto.NoResultsError ->
+        socket = 
+          socket
+          |> put_flash(:error, "Survey not found. Please check the survey link and try again.")
+          |> redirect(to: "/")
+        {:ok, socket}
+    end
+  end
+  
+  defp do_mount_survey(survey, loan_id, socket) do
     
     # Get or create survey response
     {survey_response, is_new} = get_or_create_response(survey, loan_id, socket)
@@ -55,6 +122,8 @@ defmodule CeecWeb.SurveyLive.Take do
       |> assign(:is_completed, survey_response.completion_status == "completed")
       |> assign(:show_summary, false)
       |> assign(:validation_errors, %{})
+      |> assign(:show_verification, false)  # Make sure verification is hidden
+      |> assign(:submitting, false)  # Track submission state
 
     {:ok, socket}
   end
@@ -80,6 +149,52 @@ defmodule CeecWeb.SurveyLive.Take do
     socket |> assign(:page_title, "Survey Completed")
   end
 
+  @impl true
+  def handle_event("verify_application", %{"application_id" => application_id}, socket) do
+    application_id = String.trim(application_id)
+    
+    if application_id == "" do
+      socket = 
+        socket
+        |> assign(:verification_error, "Please enter your application ID")
+      
+      {:noreply, socket}
+    else
+      case Finance.get_loan_by_application_id(application_id) do
+        nil ->
+          socket = 
+            socket
+            |> assign(:verification_error, "Application ID not found. Please check and try again.")
+          
+          {:noreply, socket}
+        
+        loan ->
+          if loan.status != "disbursed" do
+            socket = 
+              socket
+              |> assign(:verification_error, "Surveys are only available for disbursed loans. Your loan status: #{String.capitalize(loan.status)}")
+            
+            {:noreply, socket}
+          else
+            # Check if survey is for this loan's project
+            survey = socket.assigns.survey
+            if survey.project_id && survey.project_id != loan.project_id do
+              project_name = if loan.project, do: loan.project.name, else: "your project"
+              socket = 
+                socket
+                |> assign(:verification_error, "This survey is not available for #{project_name}. Please check with your loan officer.")
+              
+              {:noreply, socket}
+            else
+              # Verification successful - mount the survey
+              {:ok, updated_socket} = mount_survey(survey.id, loan.id, socket)
+              {:noreply, updated_socket}
+            end
+          end
+      end
+    end
+  end
+  
   @impl true
   def handle_event("answer_question", %{"question_id" => question_id, "answer" => answer}, socket) do
     question_id = String.to_integer(question_id)
@@ -163,43 +278,55 @@ defmodule CeecWeb.SurveyLive.Take do
 
   @impl true
   def handle_event("submit_survey", _params, socket) do
-    required_questions = Enum.filter(socket.assigns.questions, & &1.required)
-    answers = socket.assigns.answers
-    
-    # Validate required questions
-    missing_answers = Enum.filter(required_questions, fn question ->
-      not Map.has_key?(answers, question.id) or 
-      is_nil(Map.get(answers, question.id)) or 
-      Map.get(answers, question.id) == ""
-    end)
-    
-    if Enum.empty?(missing_answers) do
-      # All required questions answered - submit survey
-      case Surveys.submit_survey_response(socket.assigns.survey_response) do
-        {:ok, _} ->
-          socket = 
-            socket
-            |> put_flash(:info, "Thank you! Your survey has been submitted successfully.")
-            |> assign(:is_completed, true)
-            |> push_navigate(to: ~p"/surveys/#{socket.assigns.survey.id}/completed")
-          
-          {:noreply, socket}
-          
-        {:error, _} ->
-          {:noreply, put_flash(socket, :error, "Failed to submit survey. Please try again.")}
-      end
-    else
-      # Mark missing required questions
-      validation_errors = missing_answers
-      |> Enum.map(&{&1.id, "This question is required"})
-      |> Enum.into(%{})
-      
-      socket = 
-        socket
-        |> assign(:validation_errors, validation_errors)
-        |> put_flash(:error, "Please answer all required questions before submitting.")
-      
+    # Prevent double submissions
+    if socket.assigns.submitting do
       {:noreply, socket}
+    else
+      required_questions = Enum.filter(socket.assigns.questions, & &1.required)
+      answers = socket.assigns.answers
+      
+      # Set submitting state
+      socket = assign(socket, :submitting, true)
+      
+      # Validate required questions
+      missing_answers = Enum.filter(required_questions, fn question ->
+        not Map.has_key?(answers, question.id) or 
+        is_nil(Map.get(answers, question.id)) or 
+        Map.get(answers, question.id) == ""
+      end)
+      
+      if Enum.empty?(missing_answers) do
+        # All required questions answered - submit survey
+        case Surveys.submit_survey_response(socket.assigns.survey_response) do
+          {:ok, _} ->
+            socket = 
+              socket
+              |> put_flash(:info, "Thank you! Your survey has been submitted successfully.")
+              |> assign(:is_completed, true)
+              |> push_navigate(to: ~p"/surveys/#{socket.assigns.survey.id}/completed")
+            
+            {:noreply, socket}
+            
+          {:error, _} ->
+            socket = 
+              socket
+              |> assign(:submitting, false)  # Reset submission state on error
+              |> put_flash(:error, "Failed to submit survey. Please try again.")
+            {:noreply, socket}
+        end
+        # Mark missing required questions and reset submitting state
+        validation_errors = missing_answers
+        |> Enum.map(&{&1.id, "This question is required"})
+        |> Enum.into(%{})
+        
+        socket = 
+          socket
+          |> assign(:submitting, false)  # Reset submission state for validation errors
+          |> assign(:validation_errors, validation_errors)
+          |> put_flash(:error, "Please answer all required questions before submitting.")
+        
+        {:noreply, socket}
+      end
     end
   end
 

@@ -34,7 +34,7 @@ defmodule CeecWeb.Router do
     
     # Legacy Survey Management (redirects to builder)
     get "/surveys/new", SurveyController, :redirect_to_builder
-    resources "/surveys", SurveyController, except: [:new] do
+    resources "/admin/surveys", SurveyController, except: [:new] do
       resources "/responses", SurveyResponseController, except: [:index]
     end
 
@@ -153,9 +153,18 @@ defmodule CeecWeb.Router do
     
     live_session :public_surveys,
       on_mount: [{CeecWeb.UserAuth, :mount_current_user}] do
-      # Public survey taking interface
-      live "/surveys/:id/take", SurveyLive.Take, :take
+      # Public survey taking interface - removed direct access to prevent hardcoded survey IDs
+      # Users must go through /surveys first to verify their application ID
       live "/surveys/:id/completed", SurveyLive.Take, :completed
+      
+      # Token-based survey response (for distributed surveys)
+      live "/survey/respond/:token", SurveyResponseLive, :respond
+      
+      # Public surveys listing
+      live "/surveys", PublicSurveysLive, :index
+      
+      # Survey taking interface
+      live "/survey/take/:id", SurveyResponseLive, :take
       
       # Loan-specific survey links
       live "/loans/:loan_id/survey/:id", SurveyLive.Take, :take_for_loan

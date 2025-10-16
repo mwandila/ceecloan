@@ -166,6 +166,53 @@
             </div>
           </div>
         </div>
+        
+        <!-- Available Surveys -->
+        <%= if @loan.status == "disbursed" and length(@available_surveys) > 0 do %>
+          <div class="mt-8 pt-6 border-t border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">📋 Available Surveys</h2>
+            <p class="text-gray-600 mb-6">Complete these surveys to help us improve our services and maintain your loan.</p>
+            
+            <div class="space-y-4">
+              <%= for survey <- @available_surveys do %>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                  <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center mb-2">
+                        <h3 class="text-lg font-medium text-blue-900"><%= survey.title %></h3>
+                        <%= if DateTime.diff(DateTime.utc_now(), DateTime.from_naive!(survey.inserted_at, "Etc/UTC"), :minute) < 30 do %>
+                          <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            🆕 NEW
+                          </span>
+                        <% end %>
+                      </div>
+                      <%= if survey.description do %>
+                        <p class="text-blue-700 mb-3"><%= survey.description %></p>
+                      <% end %>
+                      <div class="flex items-center text-sm text-blue-600 space-x-4">
+                        <span>Status: <span class="font-medium">Active</span></span>
+                        <%= if survey.project do %>
+                          <span>Project: <span class="font-medium"><%= survey.project.name %></span></span>
+                        <% end %>
+                      </div>
+                    </div>
+                    <div class="ml-6">
+                      <a 
+                        href={~p"/loans/#{@loan.id}/survey/#{survey.id}"}
+                        class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm hover:shadow-md"
+                      >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        Take Survey
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
 
         <!-- Actions -->
         <div class="mt-8 pt-6 border-t border-gray-200">

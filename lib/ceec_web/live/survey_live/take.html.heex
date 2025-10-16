@@ -1,5 +1,75 @@
 <div class="min-h-screen bg-gray-50">
-  <%= if @is_completed do %>
+  <%= if assigns[:show_verification] do %>
+    <!-- Application ID Verification Screen -->
+    <div class="max-w-2xl mx-auto pt-16 pb-24 px-4 sm:px-6 lg:px-8">
+      <div class="bg-white rounded-lg shadow-sm border p-8">
+        <div class="text-center mb-8">
+          <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900 mb-2">Verify Your Identity</h1>
+          <p class="text-gray-600">Enter your loan application ID to access this survey</p>
+        </div>
+
+        <div class="mb-6">
+          <h2 class="text-lg font-medium text-gray-900 mb-4"><%= @survey.title %></h2>
+          <%= if @survey.description do %>
+            <p class="text-gray-600"><%= @survey.description %></p>
+          <% end %>
+        </div>
+
+        <form phx-submit="verify_application" class="space-y-6">
+          <div>
+            <label for="application_id" class="block text-sm font-medium text-gray-700 mb-2">
+              Loan Application ID
+            </label>
+            <input 
+              type="text" 
+              id="application_id"
+              name="application_id" 
+              value={assigns[:application_id] || ""}
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+              placeholder="Enter your application ID (e.g., 123)"
+              required
+            />
+            <p class="text-sm text-gray-500 mt-2">
+              This is the numeric ID provided when you submitted your loan application.
+            </p>
+          </div>
+
+          <%= if assigns[:verification_error] do %>
+            <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div class="flex items-center">
+                <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-red-700"><%= @verification_error %></span>
+              </div>
+            </div>
+          <% end %>
+
+          <button 
+            type="submit" 
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+          >
+            Verify and Access Survey
+          </button>
+        </form>
+
+        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+          <h3 class="text-sm font-medium text-gray-900 mb-2">Important Notes:</h3>
+          <ul class="text-sm text-gray-600 space-y-1">
+            <li>• This survey is only available for disbursed loans</li>
+            <li>• You must use the exact application ID provided to you</li>
+            <li>• Contact our office if you need help finding your application ID</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <%= if @is_completed do %>
     <!-- Completed State -->
     <div class="max-w-2xl mx-auto pt-16 pb-24 px-4 sm:px-6 lg:px-8">
       <div class="text-center">
@@ -105,12 +175,24 @@
             </button>
             <button 
               phx-click="submit_survey"
-              class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium flex items-center space-x-2"
+              disabled={@submitting}
+              class={[
+                "px-8 py-3 rounded-lg font-medium flex items-center space-x-2 transition-colors",
+                if(@submitting, do: "bg-gray-400 cursor-not-allowed", else: "bg-green-600 hover:bg-green-700 text-white")
+              ]}
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-              <span>Submit Survey</span>
+              <%= if @submitting do %>
+                <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Submitting...</span>
+              <% else %>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Submit Survey</span>
+              <% end %>
             </button>
           </div>
         </div>
@@ -372,5 +454,6 @@
         </div>
       <% end %>
     </div>
+    <% end %>
   <% end %>
 </div>

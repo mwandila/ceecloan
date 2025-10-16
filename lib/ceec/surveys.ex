@@ -6,7 +6,8 @@ defmodule Ceec.Surveys do
   import Ecto.Query, warn: false
   alias Ceec.Repo
 
-  alias Ceec.Surveys.{Survey, SurveyResponse, SurveyQuestion, QuestionResponse}
+  alias Ceec.Surveys.{Survey, SurveyResponse, SurveyQuestion, QuestionResponse, SurveyInvitation}
+  alias Ceec.Finance.Loan
 
   @doc """
   Returns the list of surveys.
@@ -363,7 +364,7 @@ defmodule Ceec.Surveys do
     survey_attrs = Map.merge(%{
       "title" => "Loan Impact Assessment Survey",
       "description" => "Comprehensive assessment of loan usage, challenges, and impact",
-      "status" => "draft",
+      "status" => "active",
       "created_by" => "System"
     }, attrs)
 
@@ -547,4 +548,150 @@ defmodule Ceec.Surveys do
   end
   
   defp calculate_average_rating(_), do: 0.0
+
+  # Survey Distribution functions
+
+  @doc """
+  Distributes a survey to all disbursed loan holders in a project.
+  """
+  def distribute_survey_to_project(%Survey{} = survey, project_id) do
+    # Get all disbursed loans for the project
+    disbursed_loans = from(l in Loan,
+      where: l.project_id == ^project_id and l.status == "disbursed",
+      preload: [:borrower, :project]
+    )
+    |> Repo.all()
+
+    if length(disbursed_loans) == 0 do
+      {:error, "No disbursed loans found for this project"}
+    else
+      # Create invitations for each disbursed loan holder
+      invitations = Enum.map(disbursed_loans, fn loan ->
+        create_survey_invitation(%{
+          survey_id: survey.id,
+          loan_id: loan.id,
+          project_id: project_id,
+          recipient_email: (loan.borrower && loan.borrower.email) || loan.email,
+          recipient_name: (loan.borrower && loan.borrower.name) || loan.applicant_name || "#{loan.first_name} #{loan.last_name}",
+          recipient_phone: (loan.borrower && loan.borrower.phone) || loan.phone,
+          status: "sent"
+        })
+      end)
+
+      # Check for any failures
+      failed_invitations = Enum.filter(invitations, fn
+        {:error, _} -> true
+        _ -> false
+      end)
+
+      successful_invitations = Enum.filter(invitations, fn
+        {:ok, _} -> true
+        _ -> false
+      end)
+
+      # Update survey status to active if it was draft
+      if survey.status == "draft" do
+        update_survey(survey, %{status: "active"})
+      end
+
+      {
+        :ok,
+        %{
+          total_sent: length(successful_invitations),
+          failed: length(failed_invitations),
+          invitations: successful_invitations
+        }
+      }
+    end
+  end
+
+  @doc """
+  Creates a survey invitation.
+  """
+  def create_survey_invitation(attrs \\ %{}) do
+    %SurveyInvitation{}
+    |> SurveyInvitation.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Gets a survey invitation by token.
+  """
+  def get_survey_invitation_by_token(token) do
+    from(si in SurveyInvitation,
+      where: si.token == ^token and si.status != "expired" and si.expires_at > ^DateTime.utc_now(),
+      preload: [:survey, :loan, :project]
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Gets survey invitations for a survey.
+  """
+  def get_survey_invitations(survey_id) do
+    from(si in SurveyInvitation,
+      where: si.survey_id == ^survey_id,
+      preload: [:loan, :project],
+      order_by: [desc: si.inserted_at]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Updates a survey invitation status.
+  """
+  def update_survey_invitation(%SurveyInvitation{} = invitation, attrs) do
+    invitation
+    |> SurveyInvitation.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Marks a survey invitation as responded when a response is submitted.
+  """
+  def mark_invitation_responded(invitation_token, survey_response_id) do
+    case get_survey_invitation_by_token(invitation_token) do
+      nil -> {:error, "Invalid or expired invitation"}
+      invitation ->
+        update_survey_invitation(invitation, %{
+          status: "responded",
+          response_id: survey_response_id,
+          responded_at: DateTime.utc_now()
+        })
+    end
+  end
+
+  @doc """
+  Gets survey distribution statistics.
+  """
+  def get_survey_distribution_stats(survey_id) do
+    invitations = get_survey_invitations(survey_id)
+    total_sent = length(invitations)
+    
+    responded = Enum.count(invitations, &(&1.status == "responded"))
+    expired = Enum.count(invitations, &(&1.status == "expired"))
+    pending = Enum.count(invitations, &(&1.status == "sent"))
+    
+    response_rate = if total_sent > 0, do: Float.round(responded / total_sent * 100, 1), else: 0.0
+    
+    %{
+      total_sent: total_sent,
+      responded: responded,
+      pending: pending,
+      expired: expired,
+      response_rate: response_rate
+    }
+  end
+
+  @doc """
+  Expires old survey invitations (can be run periodically).
+  """
+  def expire_old_invitations do
+    now = DateTime.utc_now()
+    
+    from(si in SurveyInvitation,
+      where: si.expires_at <= ^now and si.status == "sent"
+    )
+    |> Repo.update_all(set: [status: "expired", updated_at: now])
+  end
 end
