@@ -142,6 +142,15 @@ defmodule Ceec.Surveys do
     |> SurveyResponse.changeset(attrs)
     |> Repo.insert()
   end
+  
+  @doc """
+  Creates a minimal survey response for dynamic question-based surveys.
+  """
+  def create_minimal_survey_response(attrs \\ %{}) do
+    %SurveyResponse{}
+    |> SurveyResponse.minimal_changeset(attrs)
+    |> Repo.insert()
+  end
 
   @doc """
   Updates a survey response.

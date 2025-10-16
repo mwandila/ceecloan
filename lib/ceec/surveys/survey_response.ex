@@ -160,6 +160,17 @@ defmodule Ceec.Surveys.SurveyResponse do
     |> foreign_key_constraint(:survey_id)
   end
   
+  @doc """  
+  Minimal changeset for creating survey responses for dynamic question-based surveys.
+  Only requires the basic survey_id field.
+  """
+  def minimal_changeset(survey_response, attrs) do
+    survey_response
+    |> cast(attrs, [:survey_id, :loan_id, :user_id, :completion_status, :submitted_at, :ip_address, :user_agent])
+    |> validate_required([:survey_id])
+    |> foreign_key_constraint(:survey_id)
+  end
+  
   # Helper function to handle social_distribution array
   defp process_social_distribution(changeset) do
     case get_change(changeset, :social_distribution) do
