@@ -264,43 +264,6 @@ defmodule CeecWeb.SurveyLive.Take do
     end
   end
 
-  defp handle_answer(socket, question_id, answer) do
-    question_id = String.to_integer(question_id)
-    question = Enum.find(socket.assigns.questions, &(&1.id == question_id))
-
-    # Process answer based on question type
-    {response_value, response_data} = process_answer(question, answer)
-
-    # Save answer
-    case Surveys.upsert_question_response(
-           socket.assigns.survey_response.id,
-           question_id,
-           %{response_value: response_value, response_data: response_data}
-         ) do
-      {:ok, _} ->
-        # Update local answers
-        updated_answers = Map.put(socket.assigns.answers, question_id, answer)
-
-        # Recalculate progress
-        answered_questions = map_size(updated_answers)
-        total_questions = length(socket.assigns.questions)
-
-        progress =
-          if total_questions > 0, do: round(answered_questions / total_questions * 100), else: 0
-
-        socket =
-          socket
-          |> assign(:answers, updated_answers)
-          |> assign(:progress, progress)
-          |> clear_validation_error(question_id)
-
-        {:noreply, socket}
-
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Failed to save answer")}
-    end
-  end
-
   @impl true
   def handle_event("next_question", _params, socket) do
     current_index = socket.assigns.current_question_index
@@ -411,6 +374,43 @@ defmodule CeecWeb.SurveyLive.Take do
 
         {:noreply, socket}
       end
+    end
+  end
+
+  defp handle_answer(socket, question_id, answer) do
+    question_id = String.to_integer(question_id)
+    question = Enum.find(socket.assigns.questions, &(&1.id == question_id))
+
+    # Process answer based on question type
+    {response_value, response_data} = process_answer(question, answer)
+
+    # Save answer
+    case Surveys.upsert_question_response(
+           socket.assigns.survey_response.id,
+           question_id,
+           %{response_value: response_value, response_data: response_data}
+         ) do
+      {:ok, _} ->
+        # Update local answers
+        updated_answers = Map.put(socket.assigns.answers, question_id, answer)
+
+        # Recalculate progress
+        answered_questions = map_size(updated_answers)
+        total_questions = length(socket.assigns.questions)
+
+        progress =
+          if total_questions > 0, do: round(answered_questions / total_questions * 100), else: 0
+
+        socket =
+          socket
+          |> assign(:answers, updated_answers)
+          |> assign(:progress, progress)
+          |> clear_validation_error(question_id)
+
+        {:noreply, socket}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to save answer")}
     end
   end
 
@@ -532,14 +532,24 @@ defmodule CeecWeb.SurveyLive.Take do
     Map.get(answers, question_id, "")
   end
 
+  defp get_checkbox_answer(%{answers: answers}, question_id) do
+    case Map.get(answers, question_id, []) do
+      list when is_list(list) -> list
+      "" -> []
+      nil -> []
+      value -> [value]
+    end
+  end
+
   defp get_question_choices(%{options: options}) when is_map(options) do
     # Handle survey builder format: %{"choices" => [...]}
-    Map.get(options, "choices", [])
+    choices = Map.get(options, "choices", [])
+    if is_list(choices), do: choices, else: []
   end
 
   defp get_question_choices(%{options: options}) when is_list(options) do
     # Handle legacy format: ["option1", "option2"]
-    options
+    if is_list(options), do: options, else: []
   end
 
   defp get_question_choices(_) do

@@ -186,9 +186,10 @@
                         <div class="text-gray-700">
                           <%= case question.question_type do %>
                             <% "checkbox" -> %>
-                              <%= if is_list(get_answer(assigns, question.id)) do %>
+                              <% checkbox_answers = get_checkbox_answer(assigns, question.id) %>
+                              <%= if length(checkbox_answers) > 0 do %>
                                 <ul class="list-disc list-inside">
-                                  <%= for item <- get_answer(assigns, question.id) do %>
+                                  <%= for item <- checkbox_answers do %>
                                     <li>{item}</li>
                                   <% end %>
                                 </ul>
@@ -382,6 +383,7 @@
                             phx-value-answer={choice}
                             class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                           />
+                          <span class="ml-3 text-gray-700">{choice}</span>
                         </label>
                       <% end %>
                     </div>
@@ -392,7 +394,7 @@
                           <input
                             type="checkbox"
                             value={choice}
-                            checked={choice in (get_answer(assigns, current_question.id) || [])}
+                            checked={choice in get_checkbox_answer(assigns, current_question.id)}
                             phx-click="answer_question"
                             phx-value-question_id={current_question.id}
                             phx-value-answer={choice}
@@ -421,6 +423,7 @@
                                 phx-value-answer={value}
                                 class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                               />
+                              <span class="mt-1 text-sm text-gray-700">{value}</span>
                             </label>
                           <% end %>
                         </div>
@@ -455,6 +458,7 @@
                             phx-value-answer={choice}
                             class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                           />
+                          <span class="ml-3 text-gray-700">{choice}</span>
                         </label>
                       <% end %>
                     </div>
