@@ -198,7 +198,7 @@
         </div>
       <% else %>
         <!-- Question View -->
-        <div class="bg-white rounded-lg shadow-sm p-8">
+        <div class="bg-white rounded-lg shadow-sm p-8 transition-all duration-200">
           <%= if current_question = current_question(assigns) do %>
             <div class="mb-6">
               <div class="text-sm text-gray-500 mb-2">
@@ -289,17 +289,14 @@
                   </select>
                   
                 <% "radio" -> %>
-                  <div class="space-y-3">
+                  <div class="space-y-3" phx-change="answer_question" phx-value-question_id={current_question.id}>
                     <%= for choice <- get_question_choices(current_question) do %>
-                      <label class="flex items-center">
+                      <label class="flex items-center hover:bg-gray-50 p-2 rounded-lg transition-colors cursor-pointer">
                         <input 
                           type="radio" 
                           name={"question_#{current_question.id}"}
                           value={choice}
                           checked={get_answer(assigns, current_question.id) == choice}
-                          phx-click="answer_question"
-                          phx-value-question_id={current_question.id}
-                          phx-value-answer={choice}
                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                         />
                         <span class="ml-3 text-gray-700"><%= choice %></span>
@@ -310,7 +307,7 @@
                 <% "checkbox" -> %>
                   <div class="space-y-3">
                     <%= for choice <- get_question_choices(current_question) do %>
-                      <label class="flex items-center">
+                      <label class="flex items-center hover:bg-gray-50 p-2 rounded-lg transition-colors cursor-pointer">
                         <input 
                           type="checkbox" 
                           value={choice}
@@ -330,17 +327,14 @@
                     <%= if current_question.options && current_question.options["max_value"] do %>
                       <% max_value = current_question.options["max_value"] %>
                       <% labels = current_question.options["labels"] || [] %>
-                      <div class="flex items-center space-x-2">
+                      <div class="flex items-center space-x-2" phx-change="answer_question" phx-value-question_id={current_question.id}>
                         <%= for value <- 1..max_value do %>
-                          <label class="flex flex-col items-center">
+                          <label class="flex flex-col items-center hover:bg-gray-50 p-2 rounded-lg transition-colors cursor-pointer">
                             <input 
                               type="radio" 
                               name={"question_#{current_question.id}"}
                               value={value}
                               checked={get_answer(assigns, current_question.id) == to_string(value)}
-                              phx-click="answer_question"
-                              phx-value-question_id={current_question.id}
-                              phx-value-answer={value}
                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                             />
                             <span class="text-sm text-gray-600 mt-1"><%= value %></span>
@@ -363,17 +357,14 @@
                   </div>
                   
                 <% "yes_no" -> %>
-                  <div class="space-y-3">
+                  <div class="space-y-3" phx-change="answer_question" phx-value-question_id={current_question.id}>
                     <%= for choice <- ["Yes", "No"] do %>
-                      <label class="flex items-center">
+                      <label class="flex items-center hover:bg-gray-50 p-2 rounded-lg transition-colors cursor-pointer">
                         <input 
                           type="radio" 
                           name={"question_#{current_question.id}"}
                           value={choice}
                           checked={get_answer(assigns, current_question.id) == choice}
-                          phx-click="answer_question"
-                          phx-value-question_id={current_question.id}
-                          phx-value-answer={choice}
                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                         />
                         <span class="ml-3 text-gray-700"><%= choice %></span>

@@ -196,7 +196,18 @@ defmodule CeecWeb.SurveyLive.Take do
   end
   
   @impl true
+  def handle_event("answer_question", %{"question_id" => question_id, "question_" <> _ => answer}, socket) do
+    # Handle form change events from radio buttons
+    handle_answer(socket, question_id, answer)
+  end
+  
+  @impl true
   def handle_event("answer_question", %{"question_id" => question_id, "answer" => answer}, socket) do
+    # Handle direct answer events
+    handle_answer(socket, question_id, answer)
+  end
+  
+  defp handle_answer(socket, question_id, answer) do
     question_id = String.to_integer(question_id)
     question = Enum.find(socket.assigns.questions, &(&1.id == question_id))
     
