@@ -355,10 +355,12 @@
                           "border-gray-300"
                       ]}
                       phx-change="answer_question"
+                      phx-input="answer_question"
+                      phx-blur="answer_question"
                       phx-value-question_id={current_question.id}
-                      name="answer"
+                      name={"question_#{current_question.id}"}
                     >
-                      <option value="">Select an option...</option>
+                      <option value="" disabled selected={get_answer(assigns, current_question.id) == ""}>Select an option...</option>
                       
                       <%= for choice <- get_question_choices(current_question) do %>
                         <option

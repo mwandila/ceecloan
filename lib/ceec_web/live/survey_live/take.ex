@@ -235,19 +235,16 @@ defmodule CeecWeb.SurveyLive.Take do
 
   @impl true
   def handle_event("answer_question", params, socket) do
-    question_id = params["question_id"]
-    
     # Extract answer from various sources
     answer = case params do
-      %{"answer" => answer} -> answer  # From phx-value-answer (radio buttons, checkboxes)
-      %{"value" => value} -> value     # From select dropdowns
+      %{"answer" => answer} -> answer  # From named inputs
+      %{"value" => value} -> value     # From direct input events
       _ -> 
         # Handle form changes where the target field name is dynamic
         case params do
           %{"_target" => [target]} when is_binary(target) ->
             Map.get(params, target)
           _ ->
-            # Look for radio button field (question_123 => "value") as fallback
             params
             |> Enum.find(fn {key, _value} -> String.starts_with?(key, "question_") end)
             |> case do
@@ -256,11 +253,24 @@ defmodule CeecWeb.SurveyLive.Take do
             end
         end
     end
-    
-    if answer do
-      handle_answer(socket, question_id, answer)
-    else
+
+    # Determine question id from explicit param or dynamic field name
+    question_id =
+      case params["question_id"] do
+        nil ->
+          params
+          |> Enum.find(fn {key, _value} -> String.starts_with?(key, "question_") end)
+          |> case do
+            {"question_" <> id_str, _} -> id_str
+            _ -> nil
+          end
+        id -> id
+      end
+    # Ignore empty placeholder selections
+    if (is_binary(answer) && String.trim(answer) == "") or (is_list(answer) && Enum.empty?(answer)) or is_nil(question_id) do
       {:noreply, socket}
+    else
+      handle_answer(socket, question_id, answer)
     end
   end
 
@@ -384,33 +394,26 @@ defmodule CeecWeb.SurveyLive.Take do
     # Process answer based on question type
     {response_value, response_data} = process_answer(question, answer)
 
-    # Save answer
+    # Optimistically update UI immediately
+    updated_answers = Map.put(socket.assigns.answers, question_id, answer)
+    answered_questions = map_size(updated_answers)
+    total_questions = length(socket.assigns.questions)
+    progress = if total_questions > 0, do: round(answered_questions / total_questions * 100), else: 0
+
+    socket =
+      socket
+      |> assign(:answers, updated_answers)
+      |> assign(:progress, progress)
+      |> clear_validation_error(question_id)
+
+    # Persist in background; keep UI even if save fails
     case Surveys.upsert_question_response(
            socket.assigns.survey_response.id,
            question_id,
            %{response_value: response_value, response_data: response_data}
          ) do
-      {:ok, _} ->
-        # Update local answers
-        updated_answers = Map.put(socket.assigns.answers, question_id, answer)
-
-        # Recalculate progress
-        answered_questions = map_size(updated_answers)
-        total_questions = length(socket.assigns.questions)
-
-        progress =
-          if total_questions > 0, do: round(answered_questions / total_questions * 100), else: 0
-
-        socket =
-          socket
-          |> assign(:answers, updated_answers)
-          |> assign(:progress, progress)
-          |> clear_validation_error(question_id)
-
-        {:noreply, socket}
-
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Failed to save answer")}
+      {:ok, _} -> {:noreply, socket}
+      {:error, _changeset} -> {:noreply, put_flash(socket, :error, "Failed to save answer")}
     end
   end
 

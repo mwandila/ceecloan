@@ -643,8 +643,8 @@ defmodule CeecWeb.SurveyLive.Builder do
       "radio" -> "What is your age range?"
       "checkbox" -> "Which of the following apply to you?"
       "select" -> "Please select an option"
-      "text" -> "Enter your response"
-      "textarea" -> "Please provide details"
+      "text" -> "Enter your question"
+      "textarea" -> "Enter your question"
       _ -> "New Question"
     end
   end
