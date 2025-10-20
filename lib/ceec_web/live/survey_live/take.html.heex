@@ -123,7 +123,16 @@
             Thank you for taking the time to complete this survey. Your feedback is valuable to us.
           </p>
           
-          <div class="mt-8">
+          <div class="mt-8 flex items-center justify-center gap-3">
+            <%= if @can_edit do %>
+              <button
+                phx-click="reopen_response"
+                class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-medium"
+                title="Edit your answers and resubmit while the survey is still open"
+              >
+                Edit and Resubmit
+              </button>
+            <% end %>
             <.link
               href={~p"/surveys"}
               class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium"

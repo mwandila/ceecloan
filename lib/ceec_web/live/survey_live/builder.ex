@@ -690,7 +690,9 @@ defmodule CeecWeb.SurveyLive.Builder do
         title: survey.title,
         description: survey.description,
         status: survey.status,
-        project_id: survey.project_id
+        project_id: survey.project_id,
+        start_date: survey.start_date,
+        end_date: survey.end_date
       })
     else
       Surveys.create_survey(%{
@@ -698,7 +700,9 @@ defmodule CeecWeb.SurveyLive.Builder do
         description: survey.description || "",
         status: survey.status || "active",
         project_id: survey.project_id,
-        created_by: survey.created_by || "Anonymous"
+        created_by: survey.created_by || "Anonymous",
+        start_date: survey.start_date,
+        end_date: survey.end_date
       })
     end
   end

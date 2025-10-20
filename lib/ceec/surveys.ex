@@ -431,6 +431,16 @@ defmodule Ceec.Surveys do
   end
 
   @doc """
+  Reopens a previously submitted survey response for editing (sets to in_progress).
+  Uses minimal_changeset to bypass legacy required fields.
+  """
+  def reopen_survey_response(%SurveyResponse{} = survey_response) do
+    survey_response
+    |> SurveyResponse.minimal_changeset(%{completion_status: "in_progress", submitted_at: nil})
+    |> Repo.update()
+  end
+
+  @doc """
   Gets loan assessment analytics from dynamic survey responses.
   """
   def get_loan_assessment_analytics(survey_id) do

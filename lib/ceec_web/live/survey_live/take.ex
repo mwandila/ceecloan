@@ -150,6 +150,8 @@ defmodule CeecWeb.SurveyLive.Take do
           |> assign(:show_verification, false)
           # Track submission state
           |> assign(:submitting, false)
+          # Can the user reopen to edit?
+          |> assign(:can_edit, can_edit_survey?(survey))
 
         {:ok, socket}
     end
@@ -353,8 +355,8 @@ defmodule CeecWeb.SurveyLive.Take do
               |> put_flash(:info, "Thank you! Your survey has been submitted successfully.")
               |> assign(:is_completed, true)
               |> assign(:survey_response, updated_response)
-              # Use a simpler redirect for now
-              |> push_navigate(to: ~p"/surveys")
+              |> assign(:submitting, false)
+              |> assign(:can_edit, can_edit_survey?(socket.assigns.survey))
 
             {:noreply, socket}
 
@@ -414,6 +416,24 @@ defmodule CeecWeb.SurveyLive.Take do
          ) do
       {:ok, _} -> {:noreply, socket}
       {:error, _changeset} -> {:noreply, put_flash(socket, :error, "Failed to save answer")}
+    end
+  end
+
+  def handle_event("reopen_response", _params, socket) do
+    if can_edit_survey?(socket.assigns.survey) do
+      case Surveys.reopen_survey_response(socket.assigns.survey_response) do
+        {:ok, updated} ->
+          {:noreply,
+           socket
+           |> assign(:survey_response, updated)
+           |> assign(:is_completed, false)
+           |> assign(:show_summary, false)
+           |> put_flash(:info, "You can edit your answers and resubmit.")}
+        {:error, _chs} ->
+          {:noreply, put_flash(socket, :error, "Could not reopen the response.")}
+      end
+    else
+      {:noreply, put_flash(socket, :error, "Survey is closed for edits.")}
     end
   end
 
@@ -558,6 +578,15 @@ defmodule CeecWeb.SurveyLive.Take do
   defp get_question_choices(_) do
     # No options or invalid format
     []
+  end
+
+  defp can_edit_survey?(survey) do
+    cond do
+      survey.status != "active" -> false
+      survey.start_date && Date.compare(Date.utc_today(), survey.start_date) == :lt -> false
+      survey.end_date && Date.compare(Date.utc_today(), survey.end_date) == :gt -> false
+      true -> true
+    end
   end
 
   defp find_active_survey_for_loan(loan_id) do
