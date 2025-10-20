@@ -34,6 +34,12 @@ defmodule CeecWeb.Router do
     
     # Legacy Survey Management (redirects to builder)
     get "/surveys/new", SurveyController, :redirect_to_builder
+
+    # Backward-compat: redirect old paths to current routes
+    get "/surveys/:id/responses/new", PageController, :redirect_to_take
+    get "/surveys/:id/edit", PageController, :redirect_to_admin_survey_edit
+    get "/surveys/:id", PageController, :redirect_to_admin_survey_show
+
     resources "/admin/surveys", SurveyController, except: [:new] do
       resources "/responses", SurveyResponseController, except: [:index]
     end

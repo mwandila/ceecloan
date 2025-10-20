@@ -26,7 +26,7 @@ defmodule CeecWeb.PageController do
     # Get the first available survey or create a default one
     case Surveys.list_surveys() do
       [first_survey | _] ->
-        redirect(conn, to: ~p"/surveys/#{first_survey.id}/responses/new")
+        redirect(conn, to: ~p"/survey/take/#{first_survey.id}")
       [] ->
         # Create a default survey if none exist
         {:ok, survey} = Surveys.create_survey(%{
@@ -37,7 +37,7 @@ defmodule CeecWeb.PageController do
           start_date: Date.utc_today(),
           end_date: Date.add(Date.utc_today(), 365)
         })
-        redirect(conn, to: ~p"/surveys/#{survey.id}/responses/new")
+        redirect(conn, to: ~p"/survey/take/#{survey.id}")
     end
   end
   
@@ -47,6 +47,21 @@ defmodule CeecWeb.PageController do
   
   def redirect_to_login(conn, _params) do
     redirect(conn, to: ~p"/users/log_in")
+  end
+
+  # Backward-compat: handle old /surveys/:id/responses/new
+  def redirect_to_take(conn, %{"id" => id}) do
+    redirect(conn, to: ~p"/survey/take/#{id}")
+  end
+
+  # Backward-compat: redirect /surveys/:id/edit -> /admin/surveys/:id/edit
+  def redirect_to_admin_survey_edit(conn, %{"id" => id}) do
+    redirect(conn, to: ~p"/admin/surveys/#{id}/edit")
+  end
+
+  # Backward-compat: redirect /surveys/:id -> /admin/surveys/:id
+  def redirect_to_admin_survey_show(conn, %{"id" => id}) do
+    redirect(conn, to: ~p"/admin/surveys/#{id}")
   end
   
   def home(conn, _params) do

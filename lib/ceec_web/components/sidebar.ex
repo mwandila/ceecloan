@@ -92,7 +92,7 @@ defmodule CeecWeb.Components.Sidebar do
 
           <!-- Data Collection -->
           <.nav_link 
-            href="/surveys/1/responses/new" 
+            href="/responses" 
             active={@current_page == "data-collection"} 
             icon="document"
             label="Data Collection"

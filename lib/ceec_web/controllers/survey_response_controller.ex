@@ -37,7 +37,7 @@ defmodule CeecWeb.SurveyResponseController do
       nil ->
         conn
         |> put_flash(:error, "Survey not found.")
-        |> redirect(to: ~p"/surveys")
+        |> redirect(to: ~p"/admin/surveys")
       survey ->
         render(conn, :new, survey: survey)
     end
@@ -67,8 +67,9 @@ defmodule CeecWeb.SurveyResponseController do
   end
 
   def show(conn, %{"id" => id}) do
-    survey_response = Surveys.get_survey_response!(id)
-    survey = Surveys.get_survey!(survey_response.survey_id)
+    # Preload all Q&A for detailed view
+    survey_response = Surveys.get_survey_response_with_answers!(id)
+    survey = survey_response.survey
     render(conn, :show, survey_response: survey_response, survey: survey)
   end
 
@@ -86,7 +87,7 @@ defmodule CeecWeb.SurveyResponseController do
       {:ok, survey_response} ->
         conn
         |> put_flash(:info, "Survey response updated successfully.")
-        |> redirect(to: ~p"/surveys/#{survey_response.survey_id}/responses/#{survey_response}")
+        |> redirect(to: ~p"/admin/surveys/#{survey_response.survey_id}/responses/#{survey_response}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
         survey = Surveys.get_survey!(survey_response.survey_id)

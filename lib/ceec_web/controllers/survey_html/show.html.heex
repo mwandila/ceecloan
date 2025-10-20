@@ -33,7 +33,7 @@
           </div>
         </div>
         <div class="mt-6 lg:mt-0 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-          <.link href={~p"/surveys/#{@survey}/responses/new"} class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors">
+          <.link href={~p"/survey/take/#{@survey}"} class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
             </svg>
@@ -217,7 +217,7 @@
           <h3 class="mt-4 text-lg font-medium text-gray-900">No responses yet</h3>
           <p class="mt-2 text-sm text-gray-500">Be the first to provide feedback on this survey.</p>
           <div class="mt-6">
-            <.link href={~p"/surveys/#{@survey}/responses/new"} class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+            <.link href={~p"/survey/take/#{@survey}"} class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
               Take Survey
             </.link>
           </div>
