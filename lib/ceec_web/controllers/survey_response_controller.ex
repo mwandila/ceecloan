@@ -74,10 +74,8 @@ defmodule CeecWeb.SurveyResponseController do
   end
 
   def edit(conn, %{"id" => id}) do
-    survey_response = Surveys.get_survey_response!(id)
-    survey = Surveys.get_survey!(survey_response.survey_id)
-    changeset = Surveys.change_survey_response(survey_response)
-    render(conn, :edit, survey_response: survey_response, survey: survey, changeset: changeset)
+    # Editing disabled: redirect to details page instead of rendering edit template
+    redirect(conn, to: ~p"/responses/#{id}")
   end
 
   def update(conn, %{"id" => id, "survey_response" => survey_response_params}) do
