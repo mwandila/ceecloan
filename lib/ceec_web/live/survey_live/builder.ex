@@ -42,6 +42,11 @@ defmodule CeecWeb.SurveyLive.Builder do
       |> assign(:preview_answers, %{})
       |> assign(:question_changeset, SurveyQuestion.changeset(%SurveyQuestion{}, %{}))
       |> assign(:page_title, if(survey_id, do: "Edit Survey", else: "Create Survey"))
+      # Wizard mode assigns
+      |> assign(:wizard_mode, false)
+      |> assign(:wizard_current_index, 0)
+      |> assign(:show_wizard_setup, false)
+      |> assign(:wizard_target_count, nil)
 
     {:ok, socket}
   end
@@ -120,6 +125,8 @@ defmodule CeecWeb.SurveyLive.Builder do
       socket
       |> assign(:survey, survey)
       |> assign(:questions, updated_questions)
+      # If wizard is on, jump to the newly added question (no procedure change)
+      |> maybe_jump_to_last_in_wizard()
     
     {:noreply, socket}
   end
@@ -217,6 +224,81 @@ defmodule CeecWeb.SurveyLive.Builder do
   @impl true
   def handle_event("clear_all_questions", _params, socket) do
     {:noreply, assign(socket, :questions, [])}
+  end
+
+  # --------------------
+  # Wizard mode handlers
+  # --------------------
+  @impl true
+  def handle_event("toggle_wizard", _params, socket) do
+    wizard_mode = !socket.assigns.wizard_mode
+
+    socket = 
+      socket
+      |> assign(:wizard_mode, wizard_mode)
+      |> assign(:wizard_current_index, 0)
+
+    # If enabling wizard with no questions, prompt for count
+    socket = if wizard_mode && length(socket.assigns.questions) == 0 do
+      assign(socket, :show_wizard_setup, true)
+    else
+      socket
+    end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("close_wizard_setup", _params, socket) do
+    {:noreply, assign(socket, :show_wizard_setup, false)}
+  end
+
+  @impl true
+  def handle_event("start_wizard", %{"count" => count_str}, socket) do
+    count =
+      case Integer.parse(to_string(count_str)) do
+        {n, _} when n > 0 -> min(n, 200)
+        _ -> 1
+      end
+
+    # Do NOT create default questions; just enable wizard and remember target count
+    socket =
+      socket
+      |> assign(:wizard_mode, true)
+      |> assign(:wizard_target_count, count)
+      |> assign(:wizard_current_index, 0)
+      |> assign(:show_wizard_setup, false)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("wizard_next", _params, socket) do
+    next_idx = min(socket.assigns.wizard_current_index + 1, max(length(socket.assigns.questions) - 1, 0))
+    {:noreply, assign(socket, :wizard_current_index, next_idx)}
+  end
+
+  @impl true
+  def handle_event("wizard_prev", _params, socket) do
+    prev_idx = max(socket.assigns.wizard_current_index - 1, 0)
+    {:noreply, assign(socket, :wizard_current_index, prev_idx)}
+  end
+
+  @impl true
+  def handle_event("wizard_goto", %{"index" => index_str}, socket) do
+    idx =
+      case Integer.parse(to_string(index_str)) do
+        {n, _} -> n
+        _ -> 0
+      end
+
+    idx = idx |> max(0) |> min(max(length(socket.assigns.questions) - 1, 0))
+    {:noreply, assign(socket, :wizard_current_index, idx)}
+  end
+
+  @impl true
+  def handle_event("exit_wizard", _params, socket) do
+    {:noreply, assign(socket, :wizard_mode, false)}
   end
   
   # Handle saving survey
@@ -646,6 +728,15 @@ defmodule CeecWeb.SurveyLive.Builder do
       "text" -> "Enter your question"
       "textarea" -> "Enter your question"
       _ -> "New Question"
+    end
+  end
+
+  # When wizard mode is enabled and a new question is appended, jump to it
+  defp maybe_jump_to_last_in_wizard(socket) do
+    if socket.assigns[:wizard_mode] do
+      assign(socket, :wizard_current_index, max(length(socket.assigns.questions) - 1, 0))
+    else
+      socket
     end
   end
 end
