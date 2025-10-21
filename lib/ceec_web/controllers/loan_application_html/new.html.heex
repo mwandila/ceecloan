@@ -31,14 +31,14 @@
       
       <!-- Available Programs Summary -->
       <%= if length(@available_projects) > 0 do %>
-        <div class="mb-8 p-6 bg-blue-50 rounded-2xl border border-blue-200">
-          <h2 class="text-lg font-semibold text-blue-900 mb-4">Available Funding Programs</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+          <h2 class="text-base font-semibold text-blue-900 mb-3">Available Funding Programs</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             <%= for project <- @available_projects do %>
-              <div class="bg-white p-4 rounded-lg shadow-sm">
+              <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
                 <h3 class="font-medium text-gray-900 text-sm"><%= project.name %></h3>
-                <p class="text-sm text-gray-600 mt-1">Type: <%= project.project_type %></p>
-                <p class="text-sm text-gray-500 mt-2 line-clamp-2"><%= project.description %></p>
+                <p class="text-xs text-gray-600 mt-1">Type: <%= project.project_type %></p>
+                <p class="text-xs text-gray-500 mt-2 line-clamp-2"><%= project.description %></p>
               </div>
             <% end %>
           </div>
