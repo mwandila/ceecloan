@@ -1,0 +1,121 @@
+<div class="flex flex-col min-h-screen bg-gray-50">
+  <main class="flex-grow">
+    <div class="mx-auto max-w-6xl py-10 px-4 sm:px-6 lg:px-8">
+
+      <div class="mb-8">
+        <div class="md:flex md:items-center md:justify-between">
+          <div class="min-w-0 flex-1">
+            <h1 class="text-3xl font-bold tracking-tight text-gray-900">Edit Survey Responses</h1>
+            <p class="mt-2 text-lg text-gray-600">Update answers submitted by the applicant</p>
+          </div>
+          <div class="mt-4 flex space-x-3 md:mt-0 md:ml-4">
+            <.link href={~p"/responses/#{@survey_response.id}"} class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">Back</.link>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2">
+          <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Questions</h3>
+            </div>
+            <div class="px-6 py-4">
+              <form method="post" action={~p"/responses/#{@survey_response.id}"}>
+                <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+                <input type="hidden" name="_method" value="put" />
+
+                <div class="space-y-6">
+                  <%= for q <- Enum.sort_by(@survey.questions, &(&1.order_index || 0)) do %>
+                    <% existing = Enum.find(@survey_response.question_responses, &(&1.question_id == q.id)) %>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2"><%= q.question_text %></label>
+
+                      <%= case q.question_type do %>
+                        <% "text" -> %>
+                          <input class="w-full px-3 py-2 border rounded" type="text" name={"answers[#{q.id}]"} value={existing && existing.response_value} />
+                        <% "email" -> %>
+                          <input class="w-full px-3 py-2 border rounded" type="email" name={"answers[#{q.id}]"} value={existing && existing.response_value} />
+                        <% "phone" -> %>
+                          <input class="w-full px-3 py-2 border rounded" type="tel" name={"answers[#{q.id}]"} value={existing && existing.response_value} />
+                        <% "number" -> %>
+                          <input class="w-full px-3 py-2 border rounded" type="number" name={"answers[#{q.id}]"} value={existing && existing.response_value} />
+                        <% "textarea" -> %>
+                          <textarea class="w-full px-3 py-2 border rounded" rows="3" name={"answers[#{q.id}]"}><%= existing && existing.response_value %></textarea>
+                        <% "select" -> %>
+                          <select class="w-full px-3 py-2 border rounded" name={"answers[#{q.id}]"}>
+                            <option value="">-- Select --</option>
+                            <%= for choice <- (q.options && q.options["choices"]) || [] do %>
+                              <option value={choice} selected={existing && existing.response_value == choice}><%= choice %></option>
+                            <% end %>
+                          </select>
+                        <% "radio" -> %>
+                          <div class="space-y-2">
+                            <%= for choice <- (q.options && q.options["choices"]) || [] do %>
+                              <label class="flex items-center space-x-2">
+                                <input type="radio" name={"answers[#{q.id}]"} value={choice} checked={existing && existing.response_value == choice} />
+                                <span><%= choice %></span>
+                              </label>
+                            <% end %>
+                          </div>
+                        <% "checkbox" -> %>
+                          <% selected = (existing && existing.response_data && existing.response_data["selections"]) || [] %>
+                          <div class="space-y-2">
+                            <%= for choice <- (q.options && q.options["choices"]) || [] do %>
+                              <label class="flex items-center space-x-2">
+                                <input type="checkbox" name={"answers[#{q.id}][]"} value={choice} checked={Enum.member?(selected, choice)} />
+                                <span><%= choice %></span>
+                              </label>
+                            <% end %>
+                          </div>
+                        <% "rating" -> %>
+                          <% max = (q.options && q.options["max_value"]) || 5 %>
+                          <select class="w-40 px-3 py-2 border rounded" name={"answers[#{q.id}]"}>
+                            <option value="">-- Select --</option>
+                            <%= for i <- 1..max do %>
+                              <option value={i} selected={existing && existing.response_value == to_string(i)}><%= i %></option>
+                            <% end %>
+                          </select>
+                        <% "yes_no" -> %>
+                          <select class="w-40 px-3 py-2 border rounded" name={"answers[#{q.id}]"}>
+                            <option value="">-- Select --</option>
+                            <option value="true" selected={existing && existing.response_value == "true"}>Yes</option>
+                            <option value="false" selected={existing && existing.response_value == "false"}>No</option>
+                          </select>
+                        <% _ -> %>
+                          <input class="w-full px-3 py-2 border rounded" type="text" name={"answers[#{q.id}]"} value={existing && existing.response_value} />
+                      <% end %>
+
+                      <%= if q.help_text do %>
+                        <p class="mt-1 text-xs text-gray-500"><%= q.help_text %></p>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+
+                <div class="mt-8 flex justify-end space-x-3">
+                  <.link href={~p"/responses/#{@survey_response.id}"} class="px-4 py-2 border rounded-md">Cancel</.link>
+                  <button type="submit" class="px-4 py-2 rounded-md bg-indigo-600 text-white">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Survey</h3>
+            </div>
+            <div class="px-6 py-4 space-y-2">
+              <div class="text-sm text-gray-700 font-medium"><%= @survey.title %></div>
+              <div class="text-sm text-gray-500"><%= @survey.description %></div>
+              <div class="text-sm text-gray-500">Response ID: <%= String.slice(to_string(@survey_response.id), 0, 8) %>...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>

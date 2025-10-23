@@ -74,23 +74,51 @@ defmodule CeecWeb.SurveyResponseController do
   end
 
   def edit(conn, %{"id" => id}) do
-    # Editing disabled: redirect to details page instead of rendering edit template
-    redirect(conn, to: ~p"/responses/#{id}")
+    survey_response = Surveys.get_survey_response_with_answers!(id)
+    survey = survey_response.survey
+    render(conn, :edit, survey_response: survey_response, survey: survey)
   end
 
-  def update(conn, %{"id" => id, "survey_response" => survey_response_params}) do
-    survey_response = Surveys.get_survey_response!(id)
+  # Supports two kinds of updates:
+  # - updating legacy survey_response fields via "survey_response" params
+  # - updating dynamic question answers via "answers" params (question_id => value)
+  def update(conn, %{"id" => id} = params) do
+    survey_response = Surveys.get_survey_response_with_answers!(id)
 
-    case Surveys.update_survey_response(survey_response, survey_response_params) do
-      {:ok, survey_response} ->
-        conn
-        |> put_flash(:info, "Survey response updated successfully.")
-        |> redirect(to: ~p"/admin/surveys/#{survey_response.survey_id}/responses/#{survey_response}")
+    # Handle dynamic answers if present
+    if answers = Map.get(params, "answers") do
+      Enum.each(answers, fn {question_id_str, value} ->
+        question_id = String.to_integer(question_id_str)
+        question = Enum.find(survey_response.survey.questions, &(&1.id == question_id))
 
-      {:error, %Ecto.Changeset{} = changeset} ->
-        survey = Surveys.get_survey!(survey_response.survey_id)
-        render(conn, :edit, survey_response: survey_response, survey: survey, changeset: changeset)
+        response_attrs =
+          case question && question.question_type do
+            "checkbox" ->
+              selections = case value do
+                v when is_list(v) -> v
+                v when is_binary(v) -> [v]
+                _ -> []
+              end
+              %{response_value: Enum.join(selections, ","), response_data: %{"selections" => selections}}
+            _ ->
+              %{response_value: value}
+          end
+
+        Surveys.upsert_question_response(survey_response.id, question_id, response_attrs)
+      end)
     end
+
+    # Optionally handle top-level survey_response fields
+    if attrs = Map.get(params, "survey_response") do
+      case Surveys.update_survey_response(survey_response, attrs) do
+        {:ok, _} -> :ok
+        {:error, _changeset} -> :ok
+      end
+    end
+
+    conn
+    |> put_flash(:info, "Response updated")
+    |> redirect(to: ~p"/responses/#{id}")
   end
 
   def delete(conn, %{"id" => id}) do

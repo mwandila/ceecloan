@@ -410,6 +410,7 @@ defmodule Ceec.Surveys do
     SurveyResponse
     |> where([sr], sr.id == ^survey_response_id)
     |> preload([
+      :loan,
       question_responses: [question: []],
       survey: [questions: ^from(q in SurveyQuestion, order_by: q.order_index)]
     ])
